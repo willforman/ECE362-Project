@@ -1,5 +1,9 @@
 #include "stm32f0xx.h"
 #include "stm.h"
+#include <stdio.h>
+#define FIFOSIZE 16
+char serfifo[FIFOSIZE];
+int seroffset = 0;
 
 void init_usart5() {
     RCC->AHBENR |= RCC_AHBENR_GPIOCEN;
@@ -43,7 +47,7 @@ void enable_tty_interrupt() {
     USART5->CR3 |= USART_CR3_DMAR;
 
     RCC->AHBENR |= RCC_AHBENR_DMA2EN;
-    DMA2->RMPCR |= DMA_RMPCR2_CH2_USART5_RX; // Remap register set to allow it
+    DMA2_Channel2->RMPCR |= DMA_RMPCR2_CH2_USART5_RX; // Remap register set to allow it
     DMA2_Channel2->CCR &= ~DMA_CCR_EN;  // EN: Off
     DMA2_Channel2->CMAR = (uint32_t) &serfifo;
     DMA2_Channel2->CPAR = (uint32_t) &USART5->RDR;
@@ -88,16 +92,16 @@ void init_spi1_slow() {
     
     SPI1->CR1 |= SPI_CR1_SSM;// Set software slave management
     SPI1->CR1 |= SPI_CR1_SSI;// Set internal slave select
-    SP1->CR2 |= SPI_CR2_FRXTH;// Set FIFO reception threshold
+    SPI1->CR2 |= SPI_CR2_FRXTH;// Set FIFO reception threshold
     SPI1->CR1 |= SPI_CR1_SPE; // Enable SPI1 channel
 }
 
 void enable_sdcard() {
-    GPIOB->BSRR |= (1<<(2+ 16))); // set PB2 low
+    GPIOB->BSRR |= 1 << (2 + 16); // set PB2 low
 }
 
 void disable_sdcard(){
-    GPIOB->BSRR |= (1<<(2))); // set PB2 high
+    GPIOB->BSRR |= 1 << (2); // set PB2 high
 }
 
 void init_sdcard_io() {
