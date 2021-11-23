@@ -1,10 +1,10 @@
 #ifndef __SDCARD__
 #define __SDCARD__
 
-typedef enum {
-    PR_OK,
-    PR_INVALID_PATH,
-    PR_OTHER_ERR
-} PLAYRESULT;
+FRESULT openSDCardFile(FATFS *FatFs, FIL *fil);
+
+FRESULT closeSDCardFile(FATFS *FatFs, FIL *fil);
+
+FRESULT printSDCardTextFile();
 
 #endif
