@@ -1,7 +1,7 @@
 
 #include "stm32f0xx.h"
-#include "ff.h"			/* Obtains integer types */
-#include "diskio.h"		/* Declarations of disk functions */
+#include "ff.h"         /* Obtains integer types */
+#include "diskio.h"     /* Declarations of disk functions */
 #include <stdio.h>
 
 SPI_TypeDef *sd = SPI1; // the SPI interface to use for the SD card
@@ -136,10 +136,10 @@ int sdcard_writeblock(const BYTE buffer[], int len)
 static DSTATUS sdcard_status = STA_NOINIT;
 
 DSTATUS disk_initialize (
-	BYTE pdrv				/* Physical drive nmuber to identify the drive */
+    BYTE pdrv               /* Physical drive nmuber to identify the drive */
 )
 {
-	DSTATUS stat;
+    DSTATUS stat;
     int value;
     // how many times have we tried?
     int count = 0;
@@ -218,13 +218,13 @@ DSTATUS disk_status (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_read (
-	BYTE pdrv,		/* Physical drive nmuber to identify the drive */
-	BYTE *buffer,	/* Data buffer to store read data */
-	LBA_t sector,	/* Start sector in LBA */
-	UINT count		/* Number of sectors to read */
+    BYTE pdrv,      /* Physical drive nmuber to identify the drive */
+    BYTE *buffer,   /* Data buffer to store read data */
+    LBA_t sector,   /* Start sector in LBA */
+    UINT count      /* Number of sectors to read */
 )
 {
-	DRESULT res;
+    DRESULT res;
     int value;
     int status = RES_OK;
     if (disk_status(pdrv) == STA_NOINIT)
@@ -256,13 +256,13 @@ DRESULT disk_read (
 #if FF_FS_READONLY == 0
 
 DRESULT disk_write (
-	BYTE pdrv,			/* Physical drive nmuber to identify the drive */
-	const BYTE *buffer,	/* Data to be written */
-	LBA_t sector,		/* Start sector in LBA */
-	UINT count			/* Number of sectors to write */
+    BYTE pdrv,          /* Physical drive nmuber to identify the drive */
+    const BYTE *buffer, /* Data to be written */
+    LBA_t sector,       /* Start sector in LBA */
+    UINT count          /* Number of sectors to write */
 )
 {
-	DRESULT res;
+    DRESULT res;
     BYTE *p;
     int value;
     int status = RES_OK;
@@ -294,39 +294,38 @@ DRESULT disk_write (
 /*-----------------------------------------------------------------------*/
 
 DRESULT disk_ioctl (
-	BYTE pdrv,		/* Physical drive nmuber (0..) */
-	BYTE cmd,		/* Control code */
-	void *buff		/* Buffer to send/receive control data */
+    BYTE pdrv,      /* Physical drive nmuber (0..) */
+    BYTE cmd,       /* Control code */
+    void *buff      /* Buffer to send/receive control data */
 )
 {
-	DRESULT res = RES_ERROR;
-	BYTE n, csd[16];
-	int result;
+    DRESULT res = RES_ERROR;
+    BYTE n, csd[16];
+    int result;
 
-	if (disk_status(pdrv) & STA_NOINIT)
-	    return RES_NOTRDY;
+    if (disk_status(pdrv) & STA_NOINIT)
+        return RES_NOTRDY;
 
-	switch (cmd) {
-	case CTRL_SYNC: // make sure there is no pending write process
-	    return RES_OK; // can't really do much with this now
+    switch (cmd) {
+    case CTRL_SYNC: // make sure there is no pending write process
+        return RES_OK; // can't really do much with this now
 
-	case GET_SECTOR_COUNT: // Get the number of sectors on the disk
-	    if (sdcard_cmd(9, 0x00000000, 0x1) != 0)
-	        break;
-	    else {
-	        sdcard_readblock(csd, 16);
-	        int cs = csd[9] + (((int)csd[8])<<8) + (((int)csd[7])<<16) + 1;
-	        *(int*)buff = cs << 9;
-	        return RES_OK;
-	    }
+    case GET_SECTOR_COUNT: // Get the number of sectors on the disk
+        if (sdcard_cmd(9, 0x00000000, 0x1) != 0)
+            break;
+        else {
+            sdcard_readblock(csd, 16);
+            int cs = csd[9] + (((int)csd[8])<<8) + (((int)csd[7])<<16) + 1;
+            *(int*)buff = cs << 9;
+            return RES_OK;
+        }
 
-	case GET_BLOCK_SIZE: // Get the erase block size (in sectors)
-	    *(int *)buff = 256; // let's go with 128 kb
-	    return RES_OK;
+    case GET_BLOCK_SIZE: // Get the erase block size (in sectors)
+        *(int *)buff = 256; // let's go with 128 kb
+        return RES_OK;
 
-	default:
-	    return RES_PARERR;
-	}
-	return res;
+    default:
+        return RES_PARERR;
+    }
+    return res;
 }
-

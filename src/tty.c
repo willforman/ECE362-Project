@@ -93,4 +93,3 @@ int tty_input_available(void)
         return 0;
     return 1;
 }
-
