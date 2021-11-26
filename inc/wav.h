@@ -8,7 +8,7 @@
 
 typedef struct WavHeaders {
     uint32_t ChunkID;
-    uint32_t ChuckSize;
+    uint32_t ChunkSize;
     uint32_t Format;
     uint32_t Subchunk1ID;
     uint32_t Subchunk1Size;
@@ -26,6 +26,7 @@ typedef enum WavResult {
     W_OK = 0,
     W_INVALID_PATH,
     W_INVALID_HEADERS,
+    W_NOT_MONO,
     W_ERR_READING_DATA,
     W_MEM_ERR,
 } WavResult;

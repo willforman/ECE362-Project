@@ -3724,15 +3724,15 @@ Discarded input sections
  .text          0x0000000000000000        0x0 src/sdcard.o
  .data          0x0000000000000000        0x0 src/sdcard.o
  .bss           0x0000000000000000        0x0 src/sdcard.o
- .rodata        0x0000000000000000        0xd src/sdcard.o
+ .rodata        0x0000000000000000       0x11 src/sdcard.o
  .text.openSDCardFile
                 0x0000000000000000       0x4c src/sdcard.o
  .text.closeSDCardFile
-                0x0000000000000000       0x40 src/sdcard.o
+                0x0000000000000000       0x44 src/sdcard.o
  .text.printSDCardTextFile
                 0x0000000000000000       0x74 src/sdcard.o
- .debug_info    0x0000000000000000      0xc9a src/sdcard.o
- .debug_abbrev  0x0000000000000000      0x268 src/sdcard.o
+ .debug_info    0x0000000000000000      0xc84 src/sdcard.o
+ .debug_abbrev  0x0000000000000000      0x25b src/sdcard.o
  .debug_aranges
                 0x0000000000000000       0x30 src/sdcard.o
  .debug_ranges  0x0000000000000000       0x20 src/sdcard.o
@@ -3805,9 +3805,9 @@ Discarded input sections
  .debug_macro   0x0000000000000000       0x16 src/sdcard.o
  .debug_macro   0x0000000000000000       0x29 src/sdcard.o
  .debug_line    0x0000000000000000      0x888 src/sdcard.o
- .debug_str     0x0000000000000000    0x4f47d src/sdcard.o
+ .debug_str     0x0000000000000000    0x4f472 src/sdcard.o
  .comment       0x0000000000000000       0x80 src/sdcard.o
- .debug_frame   0x0000000000000000       0x78 src/sdcard.o
+ .debug_frame   0x0000000000000000       0x7c src/sdcard.o
  .ARM.attributes
                 0x0000000000000000       0x31 src/sdcard.o
  .group         0x0000000000000000        0xc src/stm.o
@@ -4274,15 +4274,19 @@ Discarded input sections
  .bss           0x0000000000000000        0x0 src/wav.o
  .text.be       0x0000000000000000       0x32 src/wav.o
  .text.verifyWavFile
-                0x0000000000000000       0xe4 src/wav.o
- .rodata        0x0000000000000000       0x23 src/wav.o
+                0x0000000000000000       0xf0 src/wav.o
+ .rodata        0x0000000000000000       0x33 src/wav.o
+ .text.printWavHeaders
+                0x0000000000000000       0x88 src/wav.o
  .text.getWavData
                 0x0000000000000000       0x74 src/wav.o
- .debug_info    0x0000000000000000      0xd5a src/wav.o
- .debug_abbrev  0x0000000000000000      0x254 src/wav.o
+ .text.playSDCardWavfile
+                0x0000000000000000       0xb0 src/wav.o
+ .debug_info    0x0000000000000000      0xdf2 src/wav.o
+ .debug_abbrev  0x0000000000000000      0x288 src/wav.o
  .debug_aranges
-                0x0000000000000000       0x30 src/wav.o
- .debug_ranges  0x0000000000000000       0x20 src/wav.o
+                0x0000000000000000       0x40 src/wav.o
+ .debug_ranges  0x0000000000000000       0x30 src/wav.o
  .debug_macro   0x0000000000000000      0x21c src/wav.o
  .debug_macro   0x0000000000000000      0xa5a src/wav.o
  .debug_macro   0x0000000000000000       0x22 src/wav.o
@@ -4322,10 +4326,10 @@ Discarded input sections
  .debug_macro   0x0000000000000000      0x1df src/wav.o
  .debug_macro   0x0000000000000000      0x106 src/wav.o
  .debug_macro   0x0000000000000000       0xee src/wav.o
- .debug_line    0x0000000000000000      0x57b src/wav.o
- .debug_str     0x0000000000000000     0x85cc src/wav.o
+ .debug_line    0x0000000000000000      0x5b6 src/wav.o
+ .debug_str     0x0000000000000000     0x8604 src/wav.o
  .comment       0x0000000000000000       0x80 src/wav.o
- .debug_frame   0x0000000000000000       0x74 src/wav.o
+ .debug_frame   0x0000000000000000       0xb8 src/wav.o
  .ARM.attributes
                 0x0000000000000000       0x31 src/wav.o
  .text          0x0000000000000000       0x14 startup/startup_stm32.o
@@ -5889,7 +5893,7 @@ OUTPUT(finalProj.elf elf32-littlearm)
  .debug_ranges  0x0000000000000608       0x58 src/tty.o
  .debug_ranges  0x0000000000000660       0x20 startup/startup_stm32.o
 
-.debug_macro    0x0000000000000000     0x34be
+.debug_macro    0x0000000000000000     0x34c8
  .debug_macro   0x0000000000000000      0x382 src/commands.o
  .debug_macro   0x0000000000000382      0x106 src/commands.o
  .debug_macro   0x0000000000000488       0xf5 src/commands.o
@@ -5934,39 +5938,39 @@ OUTPUT(finalProj.elf elf32-littlearm)
  .debug_macro   0x0000000000001e98       0x58 src/ff.o
  .debug_macro   0x0000000000001ef0       0x6d src/fifo.o
  .debug_macro   0x0000000000001f5d      0x2aa src/lcd.o
- .debug_macro   0x0000000000002207      0x329 src/stm.o
- .debug_macro   0x0000000000002530      0x243 src/syscalls.o
- .debug_macro   0x0000000000002773       0x58 src/syscalls.o
- .debug_macro   0x00000000000027cb       0x94 src/syscalls.o
- .debug_macro   0x000000000000285f       0x57 src/syscalls.o
- .debug_macro   0x00000000000028b6      0x174 src/syscalls.o
- .debug_macro   0x0000000000002a2a       0x10 src/syscalls.o
- .debug_macro   0x0000000000002a3a       0x10 src/syscalls.o
- .debug_macro   0x0000000000002a4a       0x10 src/syscalls.o
- .debug_macro   0x0000000000002a5a       0x35 src/syscalls.o
- .debug_macro   0x0000000000002a8f      0x122 src/syscalls.o
- .debug_macro   0x0000000000002bb1       0x10 src/syscalls.o
- .debug_macro   0x0000000000002bc1      0x241 src/syscalls.o
- .debug_macro   0x0000000000002e02       0x10 src/syscalls.o
- .debug_macro   0x0000000000002e12      0x189 src/syscalls.o
- .debug_macro   0x0000000000002f9b       0x16 src/syscalls.o
- .debug_macro   0x0000000000002fb1       0x88 src/syscalls.o
- .debug_macro   0x0000000000003039      0x189 src/system_stm32f0xx.o
- .debug_macro   0x00000000000031c2      0x2fc src/tty.o
+ .debug_macro   0x0000000000002207      0x333 src/stm.o
+ .debug_macro   0x000000000000253a      0x243 src/syscalls.o
+ .debug_macro   0x000000000000277d       0x58 src/syscalls.o
+ .debug_macro   0x00000000000027d5       0x94 src/syscalls.o
+ .debug_macro   0x0000000000002869       0x57 src/syscalls.o
+ .debug_macro   0x00000000000028c0      0x174 src/syscalls.o
+ .debug_macro   0x0000000000002a34       0x10 src/syscalls.o
+ .debug_macro   0x0000000000002a44       0x10 src/syscalls.o
+ .debug_macro   0x0000000000002a54       0x10 src/syscalls.o
+ .debug_macro   0x0000000000002a64       0x35 src/syscalls.o
+ .debug_macro   0x0000000000002a99      0x122 src/syscalls.o
+ .debug_macro   0x0000000000002bbb       0x10 src/syscalls.o
+ .debug_macro   0x0000000000002bcb      0x241 src/syscalls.o
+ .debug_macro   0x0000000000002e0c       0x10 src/syscalls.o
+ .debug_macro   0x0000000000002e1c      0x189 src/syscalls.o
+ .debug_macro   0x0000000000002fa5       0x16 src/syscalls.o
+ .debug_macro   0x0000000000002fbb       0x88 src/syscalls.o
+ .debug_macro   0x0000000000003043      0x189 src/system_stm32f0xx.o
+ .debug_macro   0x00000000000031cc      0x2fc src/tty.o
 
-.debug_line     0x0000000000000000     0x5dba
+.debug_line     0x0000000000000000     0x5dc6
  .debug_line    0x0000000000000000      0xcb1 src/commands.o
  .debug_line    0x0000000000000cb1      0xa42 src/diskio.o
  .debug_line    0x00000000000016f3     0x158d src/ff.o
  .debug_line    0x0000000000002c80      0x45c src/fifo.o
  .debug_line    0x00000000000030dc      0xc9a src/lcd.o
- .debug_line    0x0000000000003d76      0x97a src/stm.o
- .debug_line    0x00000000000046f0      0x6a7 src/syscalls.o
- .debug_line    0x0000000000004d97      0x70e src/system_stm32f0xx.o
- .debug_line    0x00000000000054a5      0x899 src/tty.o
- .debug_line    0x0000000000005d3e       0x7c startup/startup_stm32.o
+ .debug_line    0x0000000000003d76      0x986 src/stm.o
+ .debug_line    0x00000000000046fc      0x6a7 src/syscalls.o
+ .debug_line    0x0000000000004da3      0x70e src/system_stm32f0xx.o
+ .debug_line    0x00000000000054b1      0x899 src/tty.o
+ .debug_line    0x0000000000005d4a       0x7c startup/startup_stm32.o
 
-.debug_str      0x0000000000000000    0x54cc5
+.debug_str      0x0000000000000000    0x54cd1
  .debug_str     0x0000000000000000    0x4f35a src/commands.o
                                       0x4f66f (size before relaxing)
  .debug_str     0x000000000004f35a      0x35e src/diskio.o
@@ -5977,15 +5981,15 @@ OUTPUT(finalProj.elf elf32-littlearm)
                                        0x3be3 (size before relaxing)
  .debug_str     0x0000000000053375      0x46e src/lcd.o
                                       0x4dfe3 (size before relaxing)
- .debug_str     0x00000000000537e3      0x2b4 src/stm.o
-                                      0x4f5c0 (size before relaxing)
- .debug_str     0x0000000000053a97     0x10d7 src/syscalls.o
+ .debug_str     0x00000000000537e3      0x2c0 src/stm.o
+                                      0x4f5cc (size before relaxing)
+ .debug_str     0x0000000000053aa3     0x10d7 src/syscalls.o
                                        0x84f9 (size before relaxing)
- .debug_str     0x0000000000054b6e       0xb8 src/system_stm32f0xx.o
+ .debug_str     0x0000000000054b7a       0xb8 src/system_stm32f0xx.o
                                       0x4aaa1 (size before relaxing)
- .debug_str     0x0000000000054c26       0x76 src/tty.o
+ .debug_str     0x0000000000054c32       0x76 src/tty.o
                                       0x4eb8c (size before relaxing)
- .debug_str     0x0000000000054c9c       0x29 startup/startup_stm32.o
+ .debug_str     0x0000000000054ca8       0x29 startup/startup_stm32.o
                                          0x67 (size before relaxing)
 
 .comment        0x0000000000000000       0x7f

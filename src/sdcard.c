@@ -9,7 +9,7 @@
 FRESULT openSDCardFile(FATFS *FatFs, FIL *fil) {
     FRESULT res;
 
-    res = f_mount(&FatFs, "", 0); // Mount SD card
+    res = f_mount(FatFs, "", 0); // Mount SD card
 
     // If mounting results in an error, return
     if (res) {
@@ -17,13 +17,13 @@ FRESULT openSDCardFile(FATFS *FatFs, FIL *fil) {
     }
 
     // Open file, and return it's result code
-    return f_open(&fil, "test.txt", FA_READ);
+    return f_open(fil, "test/abc.txt", FA_READ);
 }
 
 FRESULT closeSDCardFile(FATFS *FatFs, FIL *fil) {
     FRESULT res;
 
-    f_close(&fil); // Close file 
+    res = f_close(fil); // Close file
 
     // If closing file results in an error, return
     if (res) {
@@ -39,7 +39,7 @@ FRESULT printSDCardTextFile() {
     FRESULT res;
     FIL fil;
     char line[100];
-    uint32_t total, free;
+    //uint32_t total, free;
 
     res = openSDCardFile(&FatFs, &fil);
 

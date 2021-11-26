@@ -3,6 +3,7 @@
 #include "diskio.h"
 #include "tty.h"
 #include "commands.h"
+#include "sdcard.h"
 #include <stdio.h>
 #define FIFOSIZE 16
 char serfifo[FIFOSIZE];
@@ -233,5 +234,6 @@ int main() {
     setbuf(stdin,0);
     setbuf(stdout,0);
     setbuf(stderr,0);
+    //printSDCardTextFile();
     command_shell();
 }
