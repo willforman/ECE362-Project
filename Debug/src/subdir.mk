@@ -4,11 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/DACv2.c \
 ../src/commands.c \
 ../src/diskio.c \
 ../src/ff.c \
 ../src/fifo.c \
 ../src/lcd.c \
+../src/main.c \
 ../src/sdcard.c \
 ../src/stm.c \
 ../src/syscalls.c \
@@ -17,11 +19,13 @@ C_SRCS += \
 ../src/wav.c 
 
 OBJS += \
+./src/DACv2.o \
 ./src/commands.o \
 ./src/diskio.o \
 ./src/ff.o \
 ./src/fifo.o \
 ./src/lcd.o \
+./src/main.o \
 ./src/sdcard.o \
 ./src/stm.o \
 ./src/syscalls.o \
@@ -30,11 +34,13 @@ OBJS += \
 ./src/wav.o 
 
 C_DEPS += \
+./src/DACv2.d \
 ./src/commands.d \
 ./src/diskio.d \
 ./src/ff.d \
 ./src/fifo.d \
 ./src/lcd.d \
+./src/main.d \
 ./src/sdcard.d \
 ./src/stm.d \
 ./src/syscalls.d \

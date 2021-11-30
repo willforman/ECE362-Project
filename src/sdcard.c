@@ -7,31 +7,12 @@
 #include "wav.h"
 
 FRESULT openSDCardFile(FATFS *FatFs, FIL *fil) {
-    FRESULT res;
-
-    res = f_mount(FatFs, "", 0); // Mount SD card
-
-    // If mounting results in an error, return
-    if (res) {
-        return res;
-    }
-
     // Open file, and return it's result code
-    return f_open(fil, "test/abc.txt", FA_READ);
+    return f_open(fil, "kanye.wav", FA_READ);
 }
 
 FRESULT closeSDCardFile(FATFS *FatFs, FIL *fil) {
-    FRESULT res;
-
-    res = f_close(fil); // Close file
-
-    // If closing file results in an error, return
-    if (res) {
-        return res;
-    }
-
-    // Unmount SD card after using it, then return it's result code
-    return f_mount(0, "", 1);
+    return f_close(fil); // Close file
 }
 
 FRESULT printSDCardTextFile() {

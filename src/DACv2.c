@@ -12,29 +12,52 @@
 #include <math.h>
 #include <stdint.h>
 #include "wav.h"
-
+#include "ff.h"
+#include "DAC.h"
+#include "sdcard.h"
 int playpause_history;
 int skip_history;
 int playpause_button = 0; // boolean
 int skip_button = 0;
 int dataIdx = 0; // overall index in data array
-int dataSize;
-void* dac_arr;
+
+extern WavHeaders headers;
+WavHeaders* header = &headers;
+
+extern FIL fil;
+FIL * file = &fil;
+extern FATFS FatFs;
+uint16_t dac_arr[4000];
+//uint16_t array8bit[8000];
 
 
-void play(WavHeaders *header, void *array) { // this array might need to be 16 uint16_t
+
+
+
+void stop() {
+    DMA1_Channel5->CCR &= ~DMA_CCR_EN;
+    closeSDCardFile(&FatFs, &fil);
+    f_mount(0, "", 1);
+    // logic here for pulling up next song
+}
+
+WavResult play() { // this array might need to be 16 uint16_t
     // header is a struct that has access to wav info
+    //int samples = header->ChunkSize * 8 / header->BitsPerSample; // for reference
+     // num of total elements
+    //int dacArrSize = header->BitsPerSample == 8 ? 65535 : 65535 * 2;
+    //dac_arr[dacArrSize]; // max number of elements DMA_CNDTR can take
 
-    int samples = header->ChunkSize * 8 / header->BitsPerSample; // for reference
-    dataSize = sizeof(array) / sizeof(array[0]); // num of total elements
-    int dacArrSize = header->BitsPerSample == 8 ? 65535 : 65535 * 2;
-    dac_arr[dacArrSize]; // max number of elements DMA_CNDTR can take
+    // this is an array which in the case there are 8 bits per sample, it splits every element into two elements
+
+    // if there are 8 bit samples, twice the original read elements
 
     /**************************************************
     TIMER CONFIGURATIONS
     **************************************************/
     RCC->APB2ENR |= RCC_APB2ENR_TIM15EN;
-    TIM15->ARR = 48000000 / header->SampleRate - 1; // sample_rate
+    //TIM15->ARR = 48000000 / header->SampleRate - 1; // sample_rate
+    TIM15->ARR = 10000-1;
     TIM15->PSC = 0; 
 
     TIM15->CR2 |= TIM_CR2_MMS_1;
@@ -61,39 +84,75 @@ void play(WavHeaders *header, void *array) { // this array might need to be 16 u
     DMA1_Channel5->CCR |= DMA_CCR_TCIE | DMA_CCR_HTIE; // if we need to break apart the array of data 
     DMA1_Channel5->CCR |= DMA_CCR_DIR;
 
-    int bytesPerSample =  header->BitsPerSample / 8;
+
     // initalize dac_arr (copies over the first 65535 elements)
-    int i = 0;
-    while (i < 65535) {
-        if (i > dataSize) {
-            dac_arr[i] = 0; // array has run out of elements to copy over
-			stop();
-			break;
-		}
-        else {
-            if (header->BitsPerSample == 8) {
-                dac_arr[i] = array[i];
-                i++;
-            }
-            else {
-                dac_arr[i] = (array[i] >> 8) & array[i+1];
-                i += 2;
+//    int i = 0;
+//    while (i < 8000) {
+//        if (i > dataSize) {
+//            dac_arr[i] = 0; // array has run out of elements to copy over
+//			stop();
+//			free(array);
+//			free(array8bit);
+//			break;
+//		}
+//        else {
+//            if (header->BitsPerSample == 8) {
+//                dac_arr[i] = array8bit[i];
+//                i++;
+//            }
+//            else {
+//                dac_arr[i] = array[i];
+//                i ++;
+//            }
+//        }
+//    }
+    f_lseek(file, 44);
+
+    UINT dataSize = header->Subchunk2Size;
+    UINT bytesRead = 0;
+    if (dataSize < 8000) {
+        f_read(file,dac_arr,dataSize,&bytesRead);
+
+        if (bytesRead != dataSize) {
+            fprintf(stderr, "Data read: expected=%ld, actual=%d\n", header->Subchunk2Size, bytesRead);
+            return W_ERR_READING_DATA;
+        }
+        if (header->BitsPerSample == 16) {
+            for (int j = 0;j<dataSize;j++){
+                dac_arr[j] += 32768; // adjust to unsigned
             }
         }
     }
-    dataIdx = 65535; // update where in the array 
-    DMA1_Channel5->CMAR = &dac_arr;
+
+    else {
+        f_read(file,dac_arr,8000,&bytesRead);
+        if (bytesRead != 8000) {
+            fprintf(stderr, "Data read: expected=%ld, actual=%d\n", header->Subchunk2Size, bytesRead);
+            return W_ERR_READING_DATA;
+        }
+        if (header->BitsPerSample == 16) {
+            for (int j = 0;j<4000;j++){
+                dac_arr[j] += 32768; // adjust to unsigned
+            }
+        }
+    }
+    dataIdx = 8000; // update where in the file you are
+    DMA1_Channel5->CMAR = (uint32_t) dac_arr;
 
     if (header->BitsPerSample == 8){
-        DMA1_Channel5->CPAR = (&(DAC->DHR8R1));
+        DMA1_Channel5->CPAR = (uint32_t) (&(DAC->DHR8R1));
     }
     else if (header->BitsPerSample == 16) {
-        DMA1_Channel5->CPAR = (&(DAC->DHR12L1));
+        DMA1_Channel5->CPAR = (uint32_t) (&(DAC->DHR12L1));
     }
     
-    DMA1_Channel5->CNDTR = 65535; // for circular transfer
+    if (header->BitsPerSample == 16)
+        DMA1_Channel5->CNDTR = 4000; // for circular transfer
+    else
+        DMA1_Channel5->CNDTR = 8000;
+
     DMA1_Channel5->CCR |= DMA_CCR_EN;
-    NVIC->ISER[0] |= 1 << DMA1_Channel4_5_IRQn
+    NVIC->ISER[0] |= (1 << DMA1_Channel4_5_IRQn);
 
     /**************************************************
     DAC CONFIGURATIONS
@@ -104,9 +163,11 @@ void play(WavHeaders *header, void *array) { // this array might need to be 16 u
     DAC->CR |= DAC_CR_TSEL1_1 | DAC_CR_TSEL1_0;
     DAC->CR |= DAC_CR_TEN1;
     DAC->CR |= DAC_CR_EN1;
+
+    return W_OK;
 }
 
-int check_buttons(void) {
+void check_buttons(void) {
 
     RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
     TIM7->CR1 |= TIM_CR1_ARPE;
@@ -139,51 +200,64 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
 
 
 void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler	() {
-    if (DMA1->ISR | DMA_ISR_TCIF5 || DMA1->ISR | DMA_ISR_HTIF5) {
+    UINT dataSize = header->Subchunk2Size;
+    UINT bytesRead = 0;
+    if ((DMA1->ISR | DMA_ISR_TCIF5) || (DMA1->ISR | DMA_ISR_HTIF5)) {
         // if the transfer is half complete, we starting writing the elements in the first half of the array.
         // if the transfer is fully complete, we starting writing the elements in the second half of the array.
-        int start, end;
+        int * startAddr;
         // full transfer
         if (DMA1->ISR | DMA_ISR_TCIF5) {
             DMA1->IFCR |= DMA_IFCR_CTCIF5; // acknowledge interrupt
-            start = 0;
-            end = 32768;
+            startAddr = (int*) (&dac_arr[2000]);
         }
         // half transfer
         else {
             DMA1->IFCR |= DMA_IFCR_CHTIF5; // acknowledge interrupt
-            start = 32768;
-            end = 65535;
+            startAddr = (int*) dac_arr;
+
         }
-        for (int j = start; j < end; j++) // half of dac_array
-        {
-            if ((j + dataIdx) > dataSize) {
-            // not sure if i should break here or set to 0
-                dac_arr[j] = 0; // array has run out of elements to copy over
-                stop();
-                break;
-            }
-            else {
-                if (header->BitsPerSample == 8) {
-                    dac_arr[j] = array[j + dataIdx];
-                    dataIdx++;
-                    j++;
-                }
-                else {
-                    dac_arr[j] = (array[j + dataIdx] >> 8) & array[j + dataIdx + 1];
-                    dataIdx += 2;
-                    j += 2;
-                }
-            }
+        if ((dataIdx + 8000) > dataSize){
+
+            f_read(file,startAddr, dataSize-dataIdx, &bytesRead);
+            stop();
+        }
+        else {
+
+            f_read(file,startAddr, 4000, &bytesRead);
+            dataIdx += 4000;
+
+        }
+//        for (int j = start; j < end; j++) // half of dac_array
+//        {
+//            if ((j + dataIdx) > dataSize) {
+//            // not sure if i should break here or set to 0
+//                dac_arr[j] = 0; // array has run out of elements to copy over
+//                stop();
+//
+//                break;
+//            }
+//            else {
+////                if (header->BitsPerSample == 8) {
+////                    dac_arr[j] = array8bit[j + dataIdx];
+////                    dataIdx++;
+////                    j++;
+////                }
+////                else {
+////                    dac_arr[j] = array[j+dataIdx];
+////                    dataIdx++;
+////                    j++;
+////                }
+//                f_read(file, dac_arr, 8000, )
+//            }
             if (header->BitsPerSample == 16) {
-                dac_arr[j] += 32768; // adjust to unsigned
+                for (int j = 0;j<2000;j++){
+                    startAddr[j] += 32768; // adjust to unsigned
+                }
             }
-        }
+
     }
 }
 
-void stop() {
-	DMA1_Channel5->CCR &= ~DMA_CCR_EN;
-	// logic here for pulling up next song
-}
+
  

@@ -227,13 +227,13 @@ void init_lcd_spi() {
 
 }
 
-
-int main() {
+FRESULT init_sdcard(FATFS* FatFs) {
     init_usart5();
     enable_tty_interrupt();
     setbuf(stdin,0);
     setbuf(stdout,0);
     setbuf(stderr,0);
     //printSDCardTextFile();
-    command_shell();
+    //command_shell();   
+    return f_mount(FatFs, "", 0); // Mount SD card
 }

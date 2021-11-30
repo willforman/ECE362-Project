@@ -33,6 +33,6 @@ typedef enum WavResult {
 
 WavResult verifyWavFile(FIL *file, WavHeaders* headers);
 
-WavResult getWavData(FIL *file, WavHeaders* headers, void* data);
-
+WavResult getWavData(FIL *file);
+FRESULT playSDCardWavfile();
 #endif
