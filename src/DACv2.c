@@ -19,7 +19,8 @@ int playpause_history;
 int skip_history;
 int playpause_button = 0; // boolean
 int skip_button = 0;
-int dataIdx = 0; // overall index in data array
+int dataIdx = 0; // overall index in data array (is in bytes)
+int finished = 0;
 
 extern WavHeaders headers;
 WavHeaders* header = &headers;
@@ -27,7 +28,7 @@ WavHeaders* header = &headers;
 extern FIL fil;
 FIL * file = &fil;
 extern FATFS FatFs;
-uint16_t dac_arr[4000];
+uint16_t dac_arr[8000];
 //uint16_t array8bit[8000];
 
 
@@ -36,6 +37,7 @@ uint16_t dac_arr[4000];
 
 void stop() {
     DMA1_Channel5->CCR &= ~DMA_CCR_EN;
+    RCC->AHBENR &= ~RCC_AHBENR_DMAEN;
     closeSDCardFile(&FatFs, &fil);
     f_mount(0, "", 1);
     // logic here for pulling up next song
@@ -56,13 +58,13 @@ WavResult play() { // this array might need to be 16 uint16_t
     TIMER CONFIGURATIONS
     **************************************************/
     RCC->APB2ENR |= RCC_APB2ENR_TIM15EN;
-    //TIM15->ARR = 48000000 / header->SampleRate - 1; // sample_rate
-    TIM15->ARR = 10000-1;
+    TIM15->ARR = 48000000 / header->SampleRate - 1; // sample_rate
+    //TIM15->ARR =  48000000 /8000 -1;
     TIM15->PSC = 0; 
 
     TIM15->CR2 |= TIM_CR2_MMS_1;
     TIM15->DIER |= TIM_DIER_UDE;
-    TIM15->CR1 |= TIM_CR1_CEN;
+
 
 
     /**************************************************
@@ -73,44 +75,26 @@ WavResult play() { // this array might need to be 16 uint16_t
 
     if (header->BitsPerSample == 8){
         DMA1_Channel5->CCR &= ~DMA_CCR_MSIZE;
+        DMA1_Channel5->CCR &= ~DMA_CCR_PSIZE;
     }
     else if (header->BitsPerSample == 16) {
         DMA1_Channel5->CCR &= ~DMA_CCR_MSIZE;
-        DMA1_Channel5->CCR |= DMA_CCR_MSIZE_0; 
+        DMA1_Channel5->CCR |= DMA_CCR_MSIZE_0;
+        DMA1_Channel5->CCR |= DMA_CCR_PSIZE_0;
     }
-    DMA1_Channel5->CCR |= DMA_CCR_PSIZE_0; 
+
     DMA1_Channel5->CCR |= DMA_CCR_MINC;
     DMA1_Channel5->CCR |= DMA_CCR_CIRC;
     DMA1_Channel5->CCR |= DMA_CCR_TCIE | DMA_CCR_HTIE; // if we need to break apart the array of data 
     DMA1_Channel5->CCR |= DMA_CCR_DIR;
 
 
-    // initalize dac_arr (copies over the first 65535 elements)
-//    int i = 0;
-//    while (i < 8000) {
-//        if (i > dataSize) {
-//            dac_arr[i] = 0; // array has run out of elements to copy over
-//			stop();
-//			free(array);
-//			free(array8bit);
-//			break;
-//		}
-//        else {
-//            if (header->BitsPerSample == 8) {
-//                dac_arr[i] = array8bit[i];
-//                i++;
-//            }
-//            else {
-//                dac_arr[i] = array[i];
-//                i ++;
-//            }
-//        }
-//    }
+
     f_lseek(file, 44);
 
     UINT dataSize = header->Subchunk2Size;
     UINT bytesRead = 0;
-    if (dataSize < 8000) {
+    if (dataSize < 16000) {
         f_read(file,dac_arr,dataSize,&bytesRead);
 
         if (bytesRead != dataSize) {
@@ -125,18 +109,18 @@ WavResult play() { // this array might need to be 16 uint16_t
     }
 
     else {
-        f_read(file,dac_arr,8000,&bytesRead);
-        if (bytesRead != 8000) {
+        f_read(file,dac_arr,16000,&bytesRead);
+        if (bytesRead != 16000) {
             fprintf(stderr, "Data read: expected=%ld, actual=%d\n", header->Subchunk2Size, bytesRead);
             return W_ERR_READING_DATA;
         }
         if (header->BitsPerSample == 16) {
-            for (int j = 0;j<4000;j++){
+            for (int j = 0;j<16000;j++){
                 dac_arr[j] += 32768; // adjust to unsigned
             }
         }
     }
-    dataIdx = 8000; // update where in the file you are
+    dataIdx = 16000; // update where in the file you are
     DMA1_Channel5->CMAR = (uint32_t) dac_arr;
 
     if (header->BitsPerSample == 8){
@@ -147,11 +131,11 @@ WavResult play() { // this array might need to be 16 uint16_t
     }
     
     if (header->BitsPerSample == 16)
-        DMA1_Channel5->CNDTR = 4000; // for circular transfer
+        DMA1_Channel5->CNDTR = 8000; // for circular transfer
     else
-        DMA1_Channel5->CNDTR = 8000;
+        DMA1_Channel5->CNDTR = 16000;
 
-    DMA1_Channel5->CCR |= DMA_CCR_EN;
+
     NVIC->ISER[0] |= (1 << DMA1_Channel4_5_IRQn);
 
     /**************************************************
@@ -164,70 +148,92 @@ WavResult play() { // this array might need to be 16 uint16_t
     DAC->CR |= DAC_CR_TEN1;
     DAC->CR |= DAC_CR_EN1;
 
+    DMA1_Channel5->CCR |= DMA_CCR_EN;
+    TIM15->CR1 |= TIM_CR1_CEN;
     return W_OK;
 }
 
-void check_buttons(void) {
+//void check_buttons(void) {
+//
+//    RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
+//    TIM7->CR1 |= TIM_CR1_ARPE;
+//    TIM7->ARR = 48 - 1;
+//    TIM7->PSC = 100 - 1;
+//    TIM7->DIER |= TIM_DIER_UIE;
+//    TIM7->CR1 |= TIM_CR1_CEN;
+//    NVIC->ISER[0] |= 1 << TIM7_IRQn;
+//
+//    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+//    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+//    GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_1;
+//    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR2_1;
+//    //play(); // parameters needed
+//}
 
-    RCC->APB1ENR |= RCC_APB1ENR_TIM7EN;
-    TIM7->CR1 |= TIM_CR1_ARPE;
-    TIM7->ARR = 48 - 1;
-    TIM7->PSC = 100 - 1;
-    TIM7->DIER |= TIM_DIER_UIE;
-    TIM7->CR1 |= TIM_CR1_CEN;
-    NVIC->ISER[0] |= 1 << TIM7_IRQn;
-
-    RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-    GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_1;
-    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR2_1;
-    //play(); // parameters needed 
-}
-
-void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
-    TIM7->SR &= ~TIM_SR_UIF;
-    int pa0 = GPIOA->IDR & 0x1;
-    int pb2 = GPIOB->IDR & 0x4;
-    //playpause_history = playpause_history << pa0;
-    //skip_history = skip_history << pb2;
-    if (pa0 == 1) {
-        stop(); // call function
-    }
-    if (pb2 == 1) {
-        skip_button = 1; // call function
-    }
-}
+//void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
+//    TIM7->SR &= ~TIM_SR_UIF;
+//    int pa0 = GPIOA->IDR & 0x1;
+//    int pb2 = GPIOB->IDR & 0x4;
+//    //playpause_history = playpause_history << pa0;
+//    //skip_history = skip_history << pb2;
+//    if (pa0 == 1) {
+//        stop(); // call function
+//    }
+//    if (pb2 == 1) {
+//        skip_button = 1; // call function
+//    }
+//}
 
 
 void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler	() {
+
+    if (finished){
+       stop();
+       return;
+    }
+    // if the transfer is half complete, we starting writing the elements in the first half of the array.
+    // if the transfer is fully complete, we starting writing the elements in the second half of the array.
+    int * startAddr;
+    // full transfer
+    //int res = DMA1->ISR & DMA_ISR_TCIF5;
+    if (DMA1->ISR & DMA_ISR_TCIF5) {
+        DMA1->IFCR = DMA_IFCR_CTCIF5; // acknowledge interrupt
+        startAddr = (int*) (&dac_arr[4000]);
+    }
+    // half transfer
+    else if (DMA1->ISR & DMA_ISR_HTIF5){
+        DMA1->IFCR = DMA_IFCR_CHTIF5; // acknowledge interrupt
+        startAddr = (int*) dac_arr;
+
+    }
     UINT dataSize = header->Subchunk2Size;
     UINT bytesRead = 0;
-    if ((DMA1->ISR | DMA_ISR_TCIF5) || (DMA1->ISR | DMA_ISR_HTIF5)) {
-        // if the transfer is half complete, we starting writing the elements in the first half of the array.
-        // if the transfer is fully complete, we starting writing the elements in the second half of the array.
-        int * startAddr;
-        // full transfer
-        if (DMA1->ISR | DMA_ISR_TCIF5) {
-            DMA1->IFCR |= DMA_IFCR_CTCIF5; // acknowledge interrupt
-            startAddr = (int*) (&dac_arr[2000]);
-        }
-        // half transfer
-        else {
-            DMA1->IFCR |= DMA_IFCR_CHTIF5; // acknowledge interrupt
-            startAddr = (int*) dac_arr;
+//    if ((dataIdx + 8000) > dataSize){ // when you're done
+//
+//        f_read(file,startAddr, dataSize-dataIdx, &bytesRead);
+//        for (int i = dataSize-dataIdx;i<dataSize;i++) {
+//            dac_arr[i] = 0;
+//        }
+//        stop();
+//    }
+//    else {
 
+        f_read(file,startAddr, 8000, &bytesRead);
+        dataIdx += bytesRead;
+        if (bytesRead != 8000){ // end of file; nothing more to read
+            finished = 1;
+//            for (int i=((bytesRead / 2) + 1);i <4000;i++){
+//                startAddr[i] = 0;
+//            }
+//
+//
+//            stop();
         }
-        if ((dataIdx + 8000) > dataSize){
 
-            f_read(file,startAddr, dataSize-dataIdx, &bytesRead);
-            stop();
-        }
-        else {
 
-            f_read(file,startAddr, 4000, &bytesRead);
-            dataIdx += 4000;
+  //      }
 
-        }
+
 //        for (int j = start; j < end; j++) // half of dac_array
 //        {
 //            if ((j + dataIdx) > dataSize) {
@@ -244,19 +250,19 @@ void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler	() {
 ////                    j++;
 ////                }
 ////                else {
-////                    dac_arr[j] = array[j+dataIdx];
+////                    dac_arr[j] = array[j+dataIdx];`
 ////                    dataIdx++;
 ////                    j++;
 ////                }
 //                f_read(file, dac_arr, 8000, )
 //            }
             if (header->BitsPerSample == 16) {
-                for (int j = 0;j<2000;j++){
+                for (int j = 0;j<4000;j++){
                     startAddr[j] += 32768; // adjust to unsigned
                 }
             }
 
-    }
+
 }
 
 

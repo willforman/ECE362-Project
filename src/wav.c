@@ -129,7 +129,7 @@ FRESULT playSDCardWavfile() {
 
     //res = getWavData(&fil);
     res = play();
-    printWavHeaders(&headers);
+    //printWavHeaders(&headers);
     //printData(array);
     //passToSpeaker(data, &headers); // ethans function
 

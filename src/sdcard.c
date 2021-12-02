@@ -8,7 +8,9 @@
 
 FRESULT openSDCardFile(FATFS *FatFs, FIL *fil) {
     // Open file, and return it's result code
-    return f_open(fil, "kanye.wav", FA_READ);
+    FRESULT res;
+    res = f_open(fil, "evil.wav", FA_READ);
+    return res;
 }
 
 FRESULT closeSDCardFile(FATFS *FatFs, FIL *fil) {
