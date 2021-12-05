@@ -8,7 +8,7 @@
 #include "lcd.h"
 #include "string.h"
 
-char fileNameShort[29];
+
 
 int isWav(char* filename) {
   int len = strlen(filename);
@@ -37,11 +37,12 @@ void updateFiles(Dir* dir)
       res = f_readdir(&f_dir, &fno);
       if (res != FR_OK || fno.fname[0] == 0) {
         f_closedir(&f_dir);
+        break;
       }
       // verify that it's either a directory or .wav file
-      if (!((fno.fattrib & AM_DIR) || isWav(fno.fname))) {
-        return;
-      }
+      //if (!((fno.fattrib & AM_DIR) || isWav(fno.fname))) {
+        //return;
+      //}
       dir->numFiles++;
     }
 
@@ -122,7 +123,7 @@ int handleFileSelectButton(Dir* dir) {
         appendFilename(dir, selectedFile.fname);
         updateFiles(dir);   
     } else {
-        play();
+        playSDCardWavfile(selectedFile.fname);
         return 1;
     }
     return 0;
@@ -136,52 +137,4 @@ void handleFileNextButton(Dir* dir) {
     }
 }
 
-// Display current files in current path
-void scrollDisplay(Dir* dir)
-{
-    fileNameShort[28] = '\0';
-    int sel = dir -> currSelection;
-	if (sel % 10 == 0)
-	{
-		LCD_Clear(0);
-	}
-    int offsetY = 0x00;
-    u16 x1 = 0x10;
-    u16 y1 = 0x00;
-    u16 fc1 = 0xffff; // Foreground color (0xffff = white) (text color)
-    u8 size1 = 16;
-    u8 mode1 = 0; // Transparent background = 1
 
-    for(int i = 0; i < dir -> numFiles; i++)
-    {
-        // choose the background color of selected line only
-        u16 bc1 = sel == i ? 0x7BEF : 0x0000;
-
-    	int fileNameLen = strlen(dir -> fileNames[i]);
-    	char* fileName = dir -> fileNames[i];
-
-    	strncpy(fileNameShort, fileName, 28);
-    	fileNameShort[28] = '\0';
-
-    	if (i >= sel - (sel % 10) && i < sel + 10 - (sel % 10))
-    	{
-    		LCD_DrawString(x1, y1 + offsetY, fc1, bc1, fileNameShort, size1, mode1);
-        	offsetY += 0x20;
-
-			if (fileNameLen > 28)
-			{
-				// Scroll filename by one character
-				char temp = fileName[0];
-				for(int j = 0; j < fileNameLen - 1; j++)
-				{
-					fileName[j] = fileName[j + 1];
-				}
-				fileName[fileNameLen - 1] = temp;
-			}
-    	}
-    }
-}
-
-void clearDisplay() {
-    LCD_Clear(0);
-}

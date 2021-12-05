@@ -14,6 +14,10 @@ int main() {
     enableDisplay();
     enableButtonScanning();
 
+    for (;;) {
+        asm("wfi");
+    }
+
     // Unmount SD card
     return 0;
 }

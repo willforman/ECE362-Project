@@ -14,8 +14,4 @@ int handleFileSelectButton(Dir* dir);
 
 void scrollDisplay(Dir* dir);
 
-void clearDisplay();
-
-void updateFiles(Dir* dir);
-
 #endif

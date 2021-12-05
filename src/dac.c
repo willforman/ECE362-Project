@@ -73,6 +73,7 @@ int play() { // this array might need to be 16 uint16_t
     }
     else if (header->BitsPerSample == 16) {
         DMA1_Channel5->CCR &= ~DMA_CCR_MSIZE;
+        DMA1_Channel5->CCR &= ~DMA_CCR_PSIZE;
         DMA1_Channel5->CCR |= DMA_CCR_MSIZE_0;
         DMA1_Channel5->CCR |= DMA_CCR_PSIZE_0;
     }

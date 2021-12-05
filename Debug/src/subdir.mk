@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/commands.c \
 ../src/dac.c \
 ../src/diskio.c \
 ../src/display.c \
@@ -20,6 +21,7 @@ C_SRCS += \
 ../src/wav.c 
 
 OBJS += \
+./src/commands.o \
 ./src/dac.o \
 ./src/diskio.o \
 ./src/display.o \
@@ -36,6 +38,7 @@ OBJS += \
 ./src/wav.o 
 
 C_DEPS += \
+./src/commands.d \
 ./src/dac.d \
 ./src/diskio.d \
 ./src/display.d \
