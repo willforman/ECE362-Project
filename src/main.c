@@ -1,21 +1,19 @@
-#include "stm32f0xx.h"
 #include "ff.h"
-#include "diskio.h"
-#include "tty.h"
-#include "commands.h"
 #include "sdcard.h"
-#include "wav.h"
-#include "stm.h"
-#include <stdio.h>
-
+#include "timer.h"
 
 FATFS FatFs;
 int main() {
-    printf("hello world\n");
+    if (init_sdcard(&FatFs)) {
+        return 0;
+    }
 
-    init_sdcard(&FatFs);
-    playSDCardWavfile();
+    initDisplay(2000);
+    initButtonScanning(1);
 
-     // Unmount SD card
+    enableDisplay();
+    enableButtonScanning();
+
+    // Unmount SD card
     return 0;
 }

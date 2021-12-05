@@ -4,9 +4,9 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-../src/DACv2.c \
-../src/commands.c \
+../src/dac.c \
 ../src/diskio.c \
+../src/display.c \
 ../src/ff.c \
 ../src/fifo.c \
 ../src/lcd.c \
@@ -15,13 +15,14 @@ C_SRCS += \
 ../src/stm.c \
 ../src/syscalls.c \
 ../src/system_stm32f0xx.c \
+../src/timer.c \
 ../src/tty.c \
 ../src/wav.c 
 
 OBJS += \
-./src/DACv2.o \
-./src/commands.o \
+./src/dac.o \
 ./src/diskio.o \
+./src/display.o \
 ./src/ff.o \
 ./src/fifo.o \
 ./src/lcd.o \
@@ -30,13 +31,14 @@ OBJS += \
 ./src/stm.o \
 ./src/syscalls.o \
 ./src/system_stm32f0xx.o \
+./src/timer.o \
 ./src/tty.o \
 ./src/wav.o 
 
 C_DEPS += \
-./src/DACv2.d \
-./src/commands.d \
+./src/dac.d \
 ./src/diskio.d \
+./src/display.d \
 ./src/ff.d \
 ./src/fifo.d \
 ./src/lcd.d \
@@ -45,6 +47,7 @@ C_DEPS += \
 ./src/stm.d \
 ./src/syscalls.d \
 ./src/system_stm32f0xx.d \
+./src/timer.d \
 ./src/tty.d \
 ./src/wav.d 
 

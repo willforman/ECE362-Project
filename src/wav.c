@@ -3,8 +3,6 @@
 #include "ff.h"
 #include "DAC.h"
 
-// Two approaches:
-// 
 uint16_t* array;
 WavHeaders headers;
 WavHeaders * headerAdd = &headers;
@@ -59,63 +57,9 @@ WavResult verifyWavFile(FIL *file, WavHeaders *headers) {
     return W_OK;
 }
 
-void printWavHeaders(WavHeaders *headers) {
-    printf("ChunkID = %lx\n", headers->ChunkID);
-    printf("ChunkSize = %lx\n", headers->ChunkSize);
-    printf("Format = %lx\n", headers->Format);
-    printf("Subchunk1ID = %lx\n", headers->Subchunk1ID);
-    printf("Subchunk1Size = %lx\n", headers->Subchunk1Size);
-    printf("AudioFormat = %x\n", headers->AudioFormat);
-    printf("Numchannels = %x\n", headers->NumChannels);
-    printf("SampleRate = %lx\n", headers->SampleRate);
-    printf("ByteRate = %lx\n", headers->ByteRate);
-    printf("BlockAlign = %x\n", headers->BlockAlign);
-    printf("BitsPerSample = %x\n", headers->BitsPerSample);
-    printf("Subchunk2ID = %lx\n", headers->Subchunk2ID);
-    printf("Subchunk2Size = %lx\n", headers->Subchunk2Size);
-}
-/*
-WavResult getWavData(FIL *file) {
-    UINT bytesRead;
-
-//    data = malloc(8 * headers->Subchunk2Size);
-    printf("%ld", headerAdd->Subchunk2Size);
-    uint32_t sub2Size = headerAdd->Subchunk2Size;
-    //array = malloc(sub2Size);
-    array = malloc(500);
-    if (array == NULL) {
-        return W_MEM_ERR;
-    }
-    
-    f_read(file, array, headerAdd->BitsPerSample, &bytesRead);
-
-    if (bytesRead != headerAdd->Subchunk2Size) {
-        free(array);
-        fprintf(stderr, "Data read: expected=%ld, actual=%d\n", headerAdd->Subchunk2Size, bytesRead);
-        return W_ERR_READING_DATA;
-    }
-
-    return W_OK;
-}
-
-void printData(uint16_t * array){
-
-    int size = sizeof(array) / sizeof(uint16_t);
-
-    for (int i = 0; i<size;i++){
-        printf("%x ", array[i]);
-    }
-
-}
-*/
-FRESULT playSDCardWavfile() {
-
+FRESULT playSDCardWavfile(char* filename) {
     FRESULT res;
-
-
-
-
-    res = openSDCardFile(&FatFs, &fil);
+    res = openSDCardFile(&FatFs, &fil, filename);
 
     if (res) {
         return res;
@@ -127,15 +71,5 @@ FRESULT playSDCardWavfile() {
         return 1;
     }
 
-    //res = getWavData(&fil);
-    res = play();
-    //printWavHeaders(&headers);
-    //printData(array);
-    //passToSpeaker(data, &headers); // ethans function
-
-    if (res) {
-        return 1;
-    }
-
-    return FR_OK;
+    return play();
 }

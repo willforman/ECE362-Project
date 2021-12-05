@@ -33,7 +33,6 @@ src/stm.o: ../src/stm.c \
  /Users/nathangovindarajan/Documents/workspace/finalProj/inc/diskio.h \
  /Users/nathangovindarajan/Documents/workspace/finalProj/inc/tty.h \
  /Users/nathangovindarajan/Documents/workspace/finalProj/inc/fifo.h \
- /Users/nathangovindarajan/Documents/workspace/finalProj/inc/commands.h \
  /Users/nathangovindarajan/Documents/workspace/finalProj/inc/sdcard.h
 
 /Users/nathangovindarajan/Documents/workspace/finalProj/CMSIS/device/stm32f0xx.h:
@@ -103,7 +102,5 @@ src/stm.o: ../src/stm.c \
 /Users/nathangovindarajan/Documents/workspace/finalProj/inc/tty.h:
 
 /Users/nathangovindarajan/Documents/workspace/finalProj/inc/fifo.h:
-
-/Users/nathangovindarajan/Documents/workspace/finalProj/inc/commands.h:
 
 /Users/nathangovindarajan/Documents/workspace/finalProj/inc/sdcard.h:
