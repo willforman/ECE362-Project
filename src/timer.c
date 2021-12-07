@@ -14,7 +14,6 @@ int pressPa1 = 0;
 int releasePa1 = 0;
 FRESULT res;
 
-
 // Is for scrolling the display
 void initDisplay(int calledEveryMs) {
     // initialize timer 6
@@ -26,6 +25,7 @@ void initDisplay(int calledEveryMs) {
 
     LCD_Setup();
     LCD_Clear(0);
+
 }
 
 void initButtonScanning(int calledEveryMs) {
@@ -42,20 +42,16 @@ void initButtonScanning(int calledEveryMs) {
 
 FRESULT enableDisplay() {
     FRESULT res;
-
-    dir.numFiles = 0;
+    f_chdir("/");
     res = updateFiles(&dir, "");
     if (res) {
         return res;
     }
 
-
-//    for (int i = 0; i < dir.numFiles; i++) {
-//        char* curr = dir.fileNames[i];
-//        int asdfasdf = 1;
-//    }
-
     TIM6->CR1 |=  TIM_CR1_CEN;
+
+    playingSong = 0;
+
     return 0;
 }
 
@@ -75,9 +71,9 @@ void disableButtonScanning() {
 void TIM6_DAC_IRQHandler() {
     TIM6->SR &= ~TIM_SR_UIF;
 
-    if (!playingSong) {
-        scrollDisplay(&dir);
-    }
+
+    scrollDisplay(&dir);
+
 }
 
 void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2

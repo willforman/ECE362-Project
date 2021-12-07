@@ -54,7 +54,7 @@ void init_sdcard_io() {
 void sdcard_io_high_speed() {
     SPI1->CR1 &= ~SPI_CR1_SPE; // Disable SPI1 channel
     SPI1->CR1 &= ~SPI_CR1_BR;
-    SPI1->CR1 |=SPI_CR1_BR_0; // baud rate of 12 MHz
+    SPI1->CR1 |=SPI_CR1_BR_1; // baud rate of 6 MHz
     SPI1->CR1 |= SPI_CR1_SPE;
 }
 

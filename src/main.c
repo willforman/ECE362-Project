@@ -15,6 +15,7 @@ int main() {
     if (res) {
          return res;
     }
+
     enableButtonScanning();
 
     /*for (;;) {

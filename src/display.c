@@ -9,7 +9,7 @@
 #include "string.h"
 #include "wav.h"
 
-
+DIR f_dir;
 extern FATFS FatFs;
 int isWav(char* filename) {
   int len = strlen(filename);
@@ -19,39 +19,16 @@ int isWav(char* filename) {
 // Accepts a dir with an updated path, and updates all the filenames inside it
 FRESULT updateFiles(Dir* dir, const TCHAR * dest) {
     FRESULT res;
-    DIR f_dir;
     FILINFO fno;
-
-    // free previous filenames
-    for (int i = 0; i < dir->numFiles; i++) {
-      free(dir->fileNames[i]);
-    }
 
     dir->numFiles = 0;
     dir->currSelection = 0;
 
-
-
-    // this for loop counts up the number of files in the directory
-    //res = f_mount(&FatFs, "", 0);
-//    if (res) {
-//        return res;
-//    }
     res = f_chdir(dest);
     res = f_opendir(&f_dir, "");
     if (res) {
-        //f_mount(0, "", 1);
         return res;
     }
-
-    // change into directory
-
-
-//    if (res) {
-//        f_closedir(&f_dir);
-//        //f_mount(0, "", 1);
-//        return res;
-//    }
 
     for (;;) {
       res = f_readdir(&f_dir, &fno);
@@ -64,10 +41,6 @@ FRESULT updateFiles(Dir* dir, const TCHAR * dest) {
         f_closedir(&f_dir);
         break;
       }
-      // verify that it's either a directory or .wav file
-      //if (!((fno.fattrib & AM_DIR) || isWav(fno.fname))) {
-        //return;
-      //}
       dir->numFiles++;
     }
 
@@ -93,11 +66,8 @@ FRESULT updateFiles(Dir* dir, const TCHAR * dest) {
 
 FRESULT getSelectedFile(Dir* dir, FILINFO* fno) {
   FRESULT res;
-  DIR f_dir;
-//  res = f_mount(&FatFs, "", 0);
-//  if (res) {
-//      return res;
-//  }
+
+
   res = f_opendir(&f_dir, "");
   if (res) {
       //f_mount(0, "", 1);
@@ -114,48 +84,9 @@ FRESULT getSelectedFile(Dir* dir, FILINFO* fno) {
   }
 
   f_closedir(&f_dir);
-  //f_mount(0, "", 1);
   return 0;
 }
-/*
-// this function adds current selection to path
-void appendFilename(Dir* dir, char* selectedFilename) {
-  // current path, '/', selectedFilename, '\0'
-  int newPathLen = strlen(dir->path) + strlen(selectedFilename) + 2; //     /william/\0
-  char* newPath = malloc(newPathLen);
 
-  // copy over the current path
-
-  char curr = dir->path[0];
-
-  int i;
-  for (i = 0; curr != '\0'; i++) {
-    newPath[i] = curr;
-    curr = dir->path[i + 1];
-  }
-
-  // add the slash after
-  newPath[i] = '/';
-  i++;
-
-  // add the selectedFilename
-  int j;
-  for (j = 0; i + j < newPathLen - 1; j++) {
-    newPath[i + j] = selectedFilename[j];
-  }
-
-  newPath[i + j] = '\0';
-
-  free(dir->path);
-  dir->path = newPath;
-  int strlenNew = strlen(newPath);
-  for (int k = 0; k<strlenNew;k++){
-      char c = newPath[k];
-      int kjkh  =0;
-  }
-
-}
-*/
 FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     FILINFO selectedFile;
     FRESULT res;
@@ -168,10 +99,7 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     // is directory
     if (selectedFile.fattrib & AM_DIR) {
         *selectedWav = 0;
-        //appendFilename(dir, selectedFile.fname);
-        char * destCopy = strdup(selectedFile.fname);
-        res = updateFiles(dir, destCopy);
-        free(destCopy);
+        res = updateFiles(dir, selectedFile.fname);
         if (res) {
             return res;
         }

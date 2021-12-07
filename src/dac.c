@@ -33,7 +33,7 @@ void togglePlay() {
 
 void stop() {
     DMA1_Channel5->CCR &= ~DMA_CCR_EN;
-    RCC->AHBENR &= ~RCC_AHBENR_DMAEN;
+    //RCC->AHBENR &= ~RCC_AHBENR_DMAEN;
     closeSDCardFile(&FatFs, &fil);
     //f_mount(0, "", 1);
     enableDisplay();
@@ -173,10 +173,7 @@ void init_buttons(void) {
 }
 
 void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler () {
-    if (finished){
-       stop();
-       return;
-    }
+
     // if the transfer is half complete, we starting writing the elements in the first half of the array.
     // if the transfer is fully complete, we starting writing the elements in the second half of the array.
     uint16_t * startAddr;
@@ -185,11 +182,19 @@ void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler () {
     if (DMA1->ISR & DMA_ISR_TCIF5) {
         DMA1->IFCR = DMA_IFCR_CTCIF5; // acknowledge interrupt
         startAddr = (uint16_t*) (&dac_arr[4000]);
+        if (finished){
+               stop();
+               return;
+            }
     }
     // half transfer
     else if (DMA1->ISR & DMA_ISR_HTIF5){
         DMA1->IFCR = DMA_IFCR_CHTIF5; // acknowledge interrupt
         startAddr = (uint16_t*) dac_arr;
+        if (finished){
+               stop();
+               return;
+            }
 
     }
     UINT bytesRead = 0;
