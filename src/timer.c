@@ -2,7 +2,8 @@
 #include "display.h"
 #include "dac.h"
 #include "lcd.h"
-
+#include "ff.h"
+#include "commands.h"
 Dir dir;
 int playingSong = 0;
 uint8_t pa1State = 0;
@@ -11,6 +12,7 @@ int pressPa0 = 0;
 int releasePa0 = 0;
 int pressPa1 = 0;
 int releasePa1 = 0;
+FRESULT res;
 
 
 // Is for scrolling the display
@@ -35,15 +37,19 @@ void initButtonScanning(int calledEveryMs) {
     NVIC->ISER[0] = 1 << TIM7_IRQn;
 
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
-    RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
     GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_1;
-    GPIOB->PUPDR |= GPIO_PUPDR_PUPDR2_1;
 }
 
-void enableDisplay() {
+FRESULT enableDisplay() {
+    FRESULT res;
+
     dir.numFiles = 0;
-    dir.path="/";
-    updateFiles(&dir);
+    dir.path = strdup("");
+    res = updateFiles(&dir);
+    if (res) {
+        return res;
+    }
+
 
 //    for (int i = 0; i < dir.numFiles; i++) {
 //        char* curr = dir.fileNames[i];
@@ -51,6 +57,7 @@ void enableDisplay() {
 //    }
 
     TIM6->CR1 |=  TIM_CR1_CEN;
+    return 0;
 }
 
 void disableDisplay() {
@@ -94,7 +101,12 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
     } else { // song selection
         // first button: select file
         if (pa0) {
-            if (handleFileSelectButton(&dir)) {
+            int selectedWav;
+            res = handleFileSelectButton(&dir, &selectedWav);
+            if (res) {
+                return;
+            }
+            if (selectedWav) {
                 playingSong = 1;
                 disableDisplay();
             }

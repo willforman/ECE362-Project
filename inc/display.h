@@ -1,6 +1,8 @@
 #ifndef __DISPLAY__
 #define __DISPLAY__
 
+#include "ff.h"
+
 typedef struct Dir {
    char* path;
    char** fileNames;
@@ -10,8 +12,11 @@ typedef struct Dir {
 
 void handleFileNextButton(Dir* dir);
 
-int handleFileSelectButton(Dir* dir);
+FRESULT handleFileSelectButton(Dir* dir, int* selectedWav);
 
 void scrollDisplay(Dir* dir);
+
+FRESULT updateFiles(Dir* dir);
+
 
 #endif

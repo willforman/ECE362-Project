@@ -1,22 +1,25 @@
 #include "ff.h"
-#include "sdcard.h"
 #include "timer.h"
 
 FATFS FatFs;
 int main() {
-    if (init_sdcard(&FatFs)) {
-        return 0;
+    FRESULT res;
+    res = f_mount(&FatFs, "", 0);
+    if (res) {
+        return res;
     }
-
-    initDisplay(2000);
+    initDisplay(2000000);
     initButtonScanning(1);
 
-    enableDisplay();
+    res = enableDisplay();
+    if (res) {
+         return res;
+    }
     enableButtonScanning();
 
-    for (;;) {
+    /*for (;;) {
         asm("wfi");
-    }
+    }*/
 
     // Unmount SD card
     return 0;

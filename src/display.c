@@ -7,17 +7,17 @@
 #include "dac.h"
 #include "lcd.h"
 #include "string.h"
+#include "wav.h"
 
 
-
+extern FATFS FatFs;
 int isWav(char* filename) {
   int len = strlen(filename);
   return filename[len - 4] == '.' && filename[len - 3] == 'w' && filename[len - 2] == 'a' && filename[len - 1] == 'v';
 }
 
 // Accepts a dir with an updated path, and updates all the filenames inside it
-void updateFiles(Dir* dir)
-{
+FRESULT updateFiles(Dir* dir) {
     FRESULT res;
     DIR f_dir;
     FILINFO fno;
@@ -26,16 +26,40 @@ void updateFiles(Dir* dir)
     for (int i = 0; i < dir->numFiles; i++) {
       free(dir->fileNames[i]);
     }
-    free(dir->fileNames);
 
     dir->numFiles = 0;
     dir->currSelection = 0;
 
+
+
     // this for loop counts up the number of files in the directory
+    //res = f_mount(&FatFs, "", 0);
+//    if (res) {
+//        return res;
+//    }
     res = f_opendir(&f_dir, dir->path);
+    if (res) {
+        //f_mount(0, "", 1);
+        return res;
+    }
+
+    // change into directory
+    res = f_chdir(dir->path);
+
+    if (res) {
+        f_closedir(&f_dir);
+        //f_mount(0, "", 1);
+        return res;
+    }
+
     for (;;) {
       res = f_readdir(&f_dir, &fno);
-      if (res != FR_OK || fno.fname[0] == 0) {
+      if (res != FR_OK) {
+          f_closedir(&f_dir);
+          //f_mount(0, "", 1);
+          return res;
+      }
+      if (fno.fname[0] == 0) {
         f_closedir(&f_dir);
         break;
       }
@@ -52,51 +76,61 @@ void updateFiles(Dir* dir)
 
     // fill the filenames
     res = f_opendir(&f_dir, dir->path);
-    for (int i = 0; ; i++) {
+    if (res) {
+       // f_mount(0, "", 1);
+        return res;
+    }
+    for (int i = 0; i < dir->numFiles; i++) {
       res = f_readdir(&f_dir, &fno);
-      if (res != FR_OK || fno.fname[0] == 0) {
-        f_closedir(&f_dir);
-        return;
-      }
       dir->fileNames[i] = strdup(fno.fname);
     }
-    f_closedir(&f_dir);
     
-    return;
+    f_closedir(&f_dir);
+    //f_mount(0, "", 1);
+    return 0;
 }
 
-int getSelectedFile(Dir* dir, FILINFO* fno) {
+FRESULT getSelectedFile(Dir* dir, FILINFO* fno) {
   FRESULT res;
   DIR f_dir;
+//  res = f_mount(&FatFs, "", 0);
+//  if (res) {
+//      return res;
+//  }
   res = f_opendir(&f_dir, dir->path);
+  if (res) {
+      //f_mount(0, "", 1);
+      return res;
+  }
 
   for (int i = 0; i < dir->currSelection + 1; i++) {
     res = f_readdir(&f_dir, fno);
     if (res != FR_OK || fno->fname[0] == 0) {
       f_closedir(&f_dir);
-      return 1;
+      //f_mount(0, "", 1);
+      return res;
     }
   }
 
+  f_closedir(&f_dir);
+  //f_mount(0, "", 1);
   return 0;
 }
 
 // this function adds current selection to path
 void appendFilename(Dir* dir, char* selectedFilename) {
   // current path, '/', selectedFilename, '\0'
-  int newPathLen = strlen(dir->path) + strlen(selectedFilename) + 2;
+  int newPathLen = strlen(dir->path) + strlen(selectedFilename) + 2; //     /william/\0
   char* newPath = malloc(newPathLen);
 
   // copy over the current path
+
+  char curr = dir->path[0];
+
   int i;
-  char curr;
-  for (;;) {
-    curr = dir->path[i];
-    if (curr == '\0') {
-      break;
-    }
+  for (i = 0; curr != '\0'; i++) {
     newPath[i] = curr;
-    i++;
+    curr = dir->path[i + 1];
   }
 
   // add the slash after
@@ -104,33 +138,49 @@ void appendFilename(Dir* dir, char* selectedFilename) {
   i++;
 
   // add the selectedFilename
-  for (int j = 0; i + j < newPathLen; j++) {
+  int j;
+  for (j = 0; i + j < newPathLen - 1; j++) {
     newPath[i + j] = selectedFilename[j];
   }
+
+  newPath[i + j] = '\0';
+
   free(dir->path);
   dir->path = newPath;
+  int strlenNew = strlen(newPath);
+  for (int k = 0; k<strlenNew;k++){
+      char c = newPath[k];
+      int kjkh  =0;
+  }
+
 }
 
-int handleFileSelectButton(Dir* dir) {
+FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     FILINFO selectedFile;
-    int res = getSelectedFile(dir, &selectedFile);
+    FRESULT res;
+
+    res = getSelectedFile(dir, &selectedFile);
     if (res) {
         return res;
     }
 
     // is directory
     if (selectedFile.fattrib & AM_DIR) {
+        *selectedWav = 0;
         appendFilename(dir, selectedFile.fname);
-        updateFiles(dir);   
+        res = updateFiles(dir);
+        if (res) {
+            return res;
+        }
     } else {
+        *selectedWav = 1;
         playSDCardWavfile(selectedFile.fname);
-        return 1;
     }
     return 0;
 }
 
 void handleFileNextButton(Dir* dir) {
-    if (dir->currSelection == dir->numFiles) {
+    if (dir->currSelection == dir->numFiles - 1) {
         dir->currSelection = 0;
     } else {
         dir->currSelection++;

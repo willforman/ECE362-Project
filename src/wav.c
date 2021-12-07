@@ -20,7 +20,9 @@ WavResult verifyWavFile(FIL *file, WavHeaders *headers) {
     FRESULT res;
     UINT bytesRead;
 
+    //f_mount(&FatFs, "", 0);
     res = f_read(file, headers, sizeof *headers, &bytesRead); // fills out each attribute of WavHeaders
+    //f_mount(0, "", 1);
 
     // if the read resulted in an error
     if (res) {
@@ -59,6 +61,7 @@ WavResult verifyWavFile(FIL *file, WavHeaders *headers) {
 
 FRESULT playSDCardWavfile(char* filename) {
     FRESULT res;
+
     res = openSDCardFile(&FatFs, &fil, filename);
 
     if (res) {

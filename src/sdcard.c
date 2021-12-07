@@ -6,9 +6,9 @@
 #include "wav.h"
 #include <string.h>
 
-FRESULT init_sdcard(FATFS* FatFs) {
-    return f_mount(FatFs, "", 0); // Mount SD card
-}
+//FRESULT init_sdcard(FATFS* FatFs) {
+//    return f_mount(FatFs, "", 0); // Mount SD card
+//}
 
 FRESULT openSDCardFile(FATFS *FatFs, FIL *fil, char* filename) {
     // Open file, and return it's result code
