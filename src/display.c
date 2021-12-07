@@ -17,7 +17,7 @@ int isWav(char* filename) {
 }
 
 // Accepts a dir with an updated path, and updates all the filenames inside it
-FRESULT updateFiles(Dir* dir) {
+FRESULT updateFiles(Dir* dir, const TCHAR * dest) {
     FRESULT res;
     DIR f_dir;
     FILINFO fno;
@@ -37,20 +37,21 @@ FRESULT updateFiles(Dir* dir) {
 //    if (res) {
 //        return res;
 //    }
-    res = f_opendir(&f_dir, dir->path);
+    res = f_chdir(dest);
+    res = f_opendir(&f_dir, "");
     if (res) {
         //f_mount(0, "", 1);
         return res;
     }
 
     // change into directory
-    res = f_chdir(dir->path);
 
-    if (res) {
-        f_closedir(&f_dir);
-        //f_mount(0, "", 1);
-        return res;
-    }
+
+//    if (res) {
+//        f_closedir(&f_dir);
+//        //f_mount(0, "", 1);
+//        return res;
+//    }
 
     for (;;) {
       res = f_readdir(&f_dir, &fno);
@@ -75,7 +76,7 @@ FRESULT updateFiles(Dir* dir) {
     dir->fileNames = malloc(sizeof(char*) * dir->numFiles);
 
     // fill the filenames
-    res = f_opendir(&f_dir, dir->path);
+    res = f_opendir(&f_dir, "");
     if (res) {
        // f_mount(0, "", 1);
         return res;
@@ -97,7 +98,7 @@ FRESULT getSelectedFile(Dir* dir, FILINFO* fno) {
 //  if (res) {
 //      return res;
 //  }
-  res = f_opendir(&f_dir, dir->path);
+  res = f_opendir(&f_dir, "");
   if (res) {
       //f_mount(0, "", 1);
       return res;
@@ -116,7 +117,7 @@ FRESULT getSelectedFile(Dir* dir, FILINFO* fno) {
   //f_mount(0, "", 1);
   return 0;
 }
-
+/*
 // this function adds current selection to path
 void appendFilename(Dir* dir, char* selectedFilename) {
   // current path, '/', selectedFilename, '\0'
@@ -154,7 +155,7 @@ void appendFilename(Dir* dir, char* selectedFilename) {
   }
 
 }
-
+*/
 FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     FILINFO selectedFile;
     FRESULT res;
@@ -167,8 +168,8 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     // is directory
     if (selectedFile.fattrib & AM_DIR) {
         *selectedWav = 0;
-        appendFilename(dir, selectedFile.fname);
-        res = updateFiles(dir);
+        //appendFilename(dir, selectedFile.fname);
+        res = updateFiles(dir, selectedFile.fname);
         if (res) {
             return res;
         }

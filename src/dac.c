@@ -54,7 +54,7 @@ int play() { // this array might need to be 16 uint16_t
     /**************************************************
     TIMER CONFIGURATIONS
     **************************************************/
-    f_mount(&FatFs, "", 0);
+
 
     RCC->APB2ENR |= RCC_APB2ENR_TIM15EN;
     TIM15->ARR = 48000000 / header->SampleRate - 1; // sample_rate

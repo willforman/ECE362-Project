@@ -44,8 +44,7 @@ FRESULT enableDisplay() {
     FRESULT res;
 
     dir.numFiles = 0;
-    dir.path = strdup("");
-    res = updateFiles(&dir);
+    res = updateFiles(&dir, "");
     if (res) {
         return res;
     }
