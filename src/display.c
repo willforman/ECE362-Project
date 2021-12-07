@@ -46,7 +46,7 @@ FRESULT updateFiles(Dir* dir, const TCHAR * dest) {
 
     // close the directory, and allocate memory for the array of strings
     f_closedir(&f_dir);
-    dir->fileNames = malloc(sizeof(char*) * dir->numFiles);
+    dir->fileNames = malloc(sizeof(char*) * (dir->numFiles + 1));
 
     // fill the filenames
     res = f_opendir(&f_dir, "");
@@ -54,11 +54,15 @@ FRESULT updateFiles(Dir* dir, const TCHAR * dest) {
        // f_mount(0, "", 1);
         return res;
     }
-    for (int i = 0; i < dir->numFiles; i++) {
+    int i;
+    for (i = 0; i < dir->numFiles; i++) {
       res = f_readdir(&f_dir, &fno);
       dir->fileNames[i] = strdup(fno.fname);
     }
     
+    dir->fileNames[i] = "..";
+    dir->numFiles++;
+
     f_closedir(&f_dir);
     //f_mount(0, "", 1);
     return 0;
@@ -91,6 +95,16 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     FILINFO selectedFile;
     FRESULT res;
 
+    if (dir->currSelection == dir->numFiles - 1) {
+        *selectedWav = 0;
+        res = updateFiles(dir, "..");
+        LCD_Clear(0);
+        if (res) {
+            return res;
+        }
+        return 0;
+    }
+
     res = getSelectedFile(dir, &selectedFile);
     if (res) {
         return res;
@@ -100,6 +114,7 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     if (selectedFile.fattrib & AM_DIR) {
         *selectedWav = 0;
         res = updateFiles(dir, selectedFile.fname);
+        LCD_Clear(0);
         if (res) {
             return res;
         }

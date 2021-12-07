@@ -26,6 +26,7 @@
 "src/diskio.o"
 "src/display.o"
 "src/ff.o"
+"src/ffunicode.o"
 "src/fifo.o"
 "src/lcd.o"
 "src/main.o"

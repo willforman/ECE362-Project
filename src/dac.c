@@ -183,6 +183,7 @@ void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler () {
         DMA1->IFCR = DMA_IFCR_CTCIF5; // acknowledge interrupt
         startAddr = (uint16_t*) (&dac_arr[4000]);
         if (finished){
+               finished = 0;
                stop();
                return;
             }
@@ -192,6 +193,7 @@ void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler () {
         DMA1->IFCR = DMA_IFCR_CHTIF5; // acknowledge interrupt
         startAddr = (uint16_t*) dac_arr;
         if (finished){
+               finished = 0;
                stop();
                return;
             }

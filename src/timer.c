@@ -42,6 +42,9 @@ void initButtonScanning(int calledEveryMs) {
 
 FRESULT enableDisplay() {
     FRESULT res;
+
+    LCD_Clear(0);
+
     f_chdir("/");
     res = updateFiles(&dir, "");
     if (res) {
@@ -71,10 +74,83 @@ void disableButtonScanning() {
 void TIM6_DAC_IRQHandler() {
     TIM6->SR &= ~TIM_SR_UIF;
 
-
     scrollDisplay(&dir);
-
 }
+
+#define DEBOUNCING // Uncommented, run with debouncing. Commented, run without
+#ifdef DEBOUNCING
+
+
+void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
+    TIM7->SR = ~TIM_SR_UIF;
+    int pa0 = GPIOA->IDR & 0x1;
+    int pa1 = (GPIOA->IDR & 0x2) >> 1;
+    pa0State = (pa0State << 1) | pa0;
+    pa0State &= 0xf;
+    pa1State = (pa1State << 1) | pa1;
+    pa1State &= 0xf;
+    if (pa0State == 0xf){
+        pressPa0 = 1;
+        releasePa0 = 0;
+    }
+    else if (pa0State == 0xe && pressPa0){
+        releasePa0 = 1;
+        pressPa0 = 0;
+        // clear the history byte
+        pa0State = 0;
+    }
+    if (pa1State == 0xf){
+        pressPa1 = 1;
+        releasePa1 = 0;
+    }
+    else if (pa1State == 0xe && pressPa1){
+        releasePa1 = 1;
+        pressPa1 = 0;
+        pa1State = 0;
+    }
+    // if playing song
+    if (playingSong) {
+            // first button: play pause
+            if (releasePa0) {
+                releasePa0 = 0;
+                togglePlay();
+                return;
+            }
+            // second button: end song
+            else if (releasePa1) {
+                releasePa1 = 0;
+                stop();
+                playingSong = 0;
+                return;
+            }
+        }
+        // second button: end song
+    else { // song selection
+            // first button: select file
+        if (releasePa0) {
+            releasePa0 = 0;
+            int selectedWav;
+            res = handleFileSelectButton(&dir, &selectedWav);
+            if (res) {
+                return;
+            }
+            if (selectedWav) {
+                playingSong = 1;
+                disableDisplay();
+            }
+            return;
+        }
+        // second button: move the file to the next
+        else if (releasePa1) {
+            releasePa1 = 0;
+            handleFileNextButton(&dir);
+            return;
+        }
+    }
+}
+#endif
+
+#ifndef DEBOUNCING
 
 void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
     TIM7->SR &= ~TIM_SR_UIF;
@@ -114,63 +190,5 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
         }
     }
 }
+#endif
 
-/*void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
-    TIM7->SR &= ~TIM_SR_UIF;
-    int pa0 = GPIOA->IDR & 0x1;
-    int pa1 = GPIOA->IDR & 0x2;
-
-    pa0State = pa0State << 1 | pa0;
-    pa1State = pa1State << 1 | pa1;
-
-    if (pa0State == 0xff){
-        pressPa0 = 1;
-        releasePa0 = 0;
-    }
-    else if (pa0State == 0xfe && pressPa0){
-        releasePa0 = 1;
-        pressPa0 = 0;
-    }
-
-    if (pa1State == 0xff){
-        pressPa1 = 1;
-        releasePa1 = 0;
-    }
-    else if (pa1State == 0xfe && pressPa1){
-        releasePa1 = 1;
-        pressPa1 = 0;
-    }
-
-    // if playing song
-    if (playingSong) {
-        // first button: play pause
-        if (pressPa0) {
-            pressPa0 = 0;
-            releasePa0 = 0;
-            togglePlay();
-            return;
-        }
-        // second button: end song
-        else if (releasePa1) {
-            pressPa1 = 0;
-            releasePa = 0;
-            stop();
-            playingSong = 0;
-            return;
-        }
-    } else { // song selection
-        // first button: select file
-        if (pa0) {
-            if (handleFileSelectButton(&dir)) {
-                playingSong = 1;
-                disableDisplay();
-            }
-            return;
-        } 
-        // second button: move the file to the next
-        else if (pa1) {
-            handleFileNextButton(&dir);
-            return;
-        }
-    }
-}*/

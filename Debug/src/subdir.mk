@@ -9,6 +9,7 @@ C_SRCS += \
 ../src/diskio.c \
 ../src/display.c \
 ../src/ff.c \
+../src/ffunicode.c \
 ../src/fifo.c \
 ../src/lcd.c \
 ../src/main.c \
@@ -26,6 +27,7 @@ OBJS += \
 ./src/diskio.o \
 ./src/display.o \
 ./src/ff.o \
+./src/ffunicode.o \
 ./src/fifo.o \
 ./src/lcd.o \
 ./src/main.o \
@@ -43,6 +45,7 @@ C_DEPS += \
 ./src/diskio.d \
 ./src/display.d \
 ./src/ff.d \
+./src/ffunicode.d \
 ./src/fifo.d \
 ./src/lcd.d \
 ./src/main.d \
