@@ -67,10 +67,10 @@ FRESULT playSDCardWavfile(char* filename) {
     if (res) {
         return res;
     }
+    WavResult r;
+    r = verifyWavFile(&fil, &headers);
 
-    res = verifyWavFile(&fil, &headers);
-
-    if (res) {
+    if (r) {
         return 1;
     }
 

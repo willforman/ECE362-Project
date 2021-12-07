@@ -169,7 +169,9 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
     if (selectedFile.fattrib & AM_DIR) {
         *selectedWav = 0;
         //appendFilename(dir, selectedFile.fname);
-        res = updateFiles(dir, selectedFile.fname);
+        char * destCopy = strdup(selectedFile.fname);
+        res = updateFiles(dir, destCopy);
+        free(destCopy);
         if (res) {
             return res;
         }

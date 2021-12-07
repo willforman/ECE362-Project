@@ -35,7 +35,7 @@ void stop() {
     DMA1_Channel5->CCR &= ~DMA_CCR_EN;
     RCC->AHBENR &= ~RCC_AHBENR_DMAEN;
     closeSDCardFile(&FatFs, &fil);
-    f_mount(0, "", 1);
+    //f_mount(0, "", 1);
     enableDisplay();
     // logic here for pulling up next song
 }
