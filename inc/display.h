@@ -14,9 +14,11 @@ void handleFileNextButton(Dir* dir);
 
 FRESULT handleFileSelectButton(Dir* dir, int* selectedWav);
 
-void scrollDisplay(Dir* dir);
-
 FRESULT updateFiles(Dir* dir, const TCHAR *);
 
+void updatePlayingDisplay();
+void updateFilesDisplay(Dir* dir);
+
+void initPlayingDisplay();
 
 #endif

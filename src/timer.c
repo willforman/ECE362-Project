@@ -18,8 +18,8 @@ FRESULT res;
 void initDisplay(int calledEveryMs) {
     // initialize timer 6
     RCC->APB1ENR = RCC_APB1ENR_TIM6EN;
-    TIM6->PSC = 48 - 1;
-    TIM6->ARR = 100 * calledEveryMs - 1;
+    TIM6->PSC = 480 - 1;
+    TIM6->ARR = calledEveryMs - 1;
     TIM6->DIER |= TIM_DIER_UIE;
     NVIC->ISER[0] = 1 << TIM6_DAC_IRQn;
 
@@ -60,7 +60,7 @@ FRESULT enableDisplay() {
 
 void disableDisplay() {
     TIM6->CR1 &= ~TIM_CR1_CEN;
-    clearDisplay();
+    LCD_Clear(0);
 }
 
 void enableButtonScanning() {
@@ -74,7 +74,12 @@ void disableButtonScanning() {
 void TIM6_DAC_IRQHandler() {
     TIM6->SR &= ~TIM_SR_UIF;
 
-    scrollDisplay(&dir);
+    if (playingSong) {
+        updatePlayingDisplay();
+    }
+    else{
+        updateFilesDisplay(&dir);
+    }
 }
 
 #define DEBOUNCING // Uncommented, run with debouncing. Commented, run without
@@ -136,7 +141,8 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
             }
             if (selectedWav) {
                 playingSong = 1;
-                disableDisplay();
+                LCD_Clear(0);
+                initPlayingDisplay();
             }
             return;
         }

@@ -7,8 +7,6 @@ struct commands_t {
     void      (*fn)(int argc, char *argv[]);
 };
 
-void scrollDisplay(Dir* dir);
-
 void clearDisplay();
 
 #endif /* __COMMANDS_H_ */

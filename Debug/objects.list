@@ -28,6 +28,7 @@
 "src/ff.o"
 "src/ffunicode.o"
 "src/fifo.o"
+"src/internal_clock.o"
 "src/lcd.o"
 "src/main.o"
 "src/sdcard.o"

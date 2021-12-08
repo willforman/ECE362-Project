@@ -7,6 +7,7 @@
 #include "sdcard.h"
 #include "display.h"
 #include "timer.h"
+
 int playpause_history;
 int skip_history;
 int playpause_button = 0; // boolean
@@ -33,24 +34,11 @@ void togglePlay() {
 
 void stop() {
     DMA1_Channel5->CCR &= ~DMA_CCR_EN;
-    //RCC->AHBENR &= ~RCC_AHBENR_DMAEN;
     closeSDCardFile(&FatFs, &fil);
-    //f_mount(0, "", 1);
     enableDisplay();
-    // logic here for pulling up next song
 }
 
 int play() { // this array might need to be 16 uint16_t
-    // header is a struct that has access to wav info
-    //int samples = header->ChunkSize * 8 / header->BitsPerSample; // for reference
-     // num of total elements
-    //int dacArrSize = header->BitsPerSample == 8 ? 65535 : 65535 * 2;
-    //dac_arr[dacArrSize]; // max number of elements DMA_CNDTR can take
-
-    // this is an array which in the case there are 8 bits per sample, it splits every element into two elements
-
-    // if there are 8 bit samples, twice the original read elements
-
     /**************************************************
     TIMER CONFIGURATIONS
     **************************************************/
@@ -158,14 +146,8 @@ void init_buttons(void) {
     TIM7->PSC = 100 - 1;
     TIM7->DIER |= TIM_DIER_UIE;
     TIM7->CR1 |= TIM_CR1_CEN;
-    //NVIC_InitTypeDef NVIC_InitStructure;
 
     NVIC_SetPriority(TIM7_IRQn,0);
-//    NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn; //TIM4 IRQ Channel
-//    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;//Preemption Priority
-//    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0; //Sub Priority
-//    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-//    NVIC_Init(&NVIC_InitStructure);
     NVIC->ISER[0] |= 1 << TIM7_IRQn;
 
     RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
@@ -197,64 +179,18 @@ void DMA1_CH4_5_6_7_DMA2_CH3_4_5_IRQHandler () {
                stop();
                return;
             }
-
     }
     UINT bytesRead = 0;
-//    if ((dataIdx + 8000) > dataSize){ // when you're done
-//
-//        f_read(file,startAddr, dataSize-dataIdx, &bytesRead);
-//        for (int i = dataSize-dataIdx;i<dataSize;i++) {
-//            dac_arr[i] = 0;
-//        }
-//        stop();
-//    }
-//    else {
+    f_read(file,startAddr, 8000, &bytesRead);
+    dataIdx += bytesRead;
+    if (bytesRead != 8000){ // end of file; nothing more to read
+        finished = 1;
+    }
+    if (header->BitsPerSample == 16) {
+        for (int j = 0;j<4000;j++){
 
-        f_read(file,startAddr, 8000, &bytesRead);
-        dataIdx += bytesRead;
-        if (bytesRead != 8000){ // end of file; nothing more to read
-            finished = 1;
-//            for (int i=((bytesRead / 2) + 1);i <4000;i++){
-//                startAddr[i] = 0;
-//            }
-//
-//
-//            stop();
+            startAddr[j] += 0x8000; // adjust to unsigned
         }
-
-
-  //      }
-
-
-//        for (int j = start; j < end; j++) // half of dac_array
-//        {
-//            if ((j + dataIdx) > dataSize) {
-//            // not sure if i should break here or set to 0
-//                dac_arr[j] = 0; // array has run out of elements to copy over
-//                stop();
-//
-//                break;
-//            }
-//            else {
-////                if (header->BitsPerSample == 8) {
-////                    dac_arr[j] = array8bit[j + dataIdx];
-////                    dataIdx++;
-////                    j++;
-////                }
-////                else {
-////                    dac_arr[j] = array[j+dataIdx];`
-////                    dataIdx++;
-////                    j++;
-////                }
-//                f_read(file, dac_arr, 8000, )
-//            }
-            if (header->BitsPerSample == 16) {
-                for (int j = 0;j<4000;j++){
-
-                    startAddr[j] += 0x8000; // adjust to unsigned
-                }
-            }
-
-
+    }
 }
 

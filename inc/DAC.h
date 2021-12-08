@@ -7,4 +7,6 @@ void togglePlay();
 
 void stop();
 
+void internal_clock();
+
 #endif

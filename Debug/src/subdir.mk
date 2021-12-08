@@ -11,6 +11,7 @@ C_SRCS += \
 ../src/ff.c \
 ../src/ffunicode.c \
 ../src/fifo.c \
+../src/internal_clock.c \
 ../src/lcd.c \
 ../src/main.c \
 ../src/sdcard.c \
@@ -29,6 +30,7 @@ OBJS += \
 ./src/ff.o \
 ./src/ffunicode.o \
 ./src/fifo.o \
+./src/internal_clock.o \
 ./src/lcd.o \
 ./src/main.o \
 ./src/sdcard.o \
@@ -47,6 +49,7 @@ C_DEPS += \
 ./src/ff.d \
 ./src/ffunicode.d \
 ./src/fifo.d \
+./src/internal_clock.d \
 ./src/lcd.d \
 ./src/main.d \
 ./src/sdcard.d \

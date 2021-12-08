@@ -2,6 +2,7 @@
 #include "sdcard.h"
 #include "ff.h"
 #include "DAC.h"
+#include "display.h"
 
 uint16_t* array;
 WavHeaders headers;
@@ -50,11 +51,13 @@ WavResult verifyWavFile(FIL *file, WavHeaders *headers) {
 
     // Some .wav files may include extra params in the fmt block.
     // We need to advance the Subchunk2ID past these
-    while (headers->Subchunk2ID != be(0x64617461)) {
+    /*while (headers->Subchunk2ID != be(0x64617461)) {
         f_lseek(file, 4);
         f_read(file, &(headers->Subchunk2ID), 4, &bytesRead);
     }
-    f_read(file, &(headers->Subchunk2Size), 4, &bytesRead);
+    f_read(file, &(headers->Subchunk2Size), 4, &bytesRead);*/
+
+    initPlayingDisplay();
 
     return W_OK;
 }
