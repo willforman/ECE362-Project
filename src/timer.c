@@ -25,7 +25,6 @@ void initDisplay(int calledEveryMs) {
 
     LCD_Setup();
     LCD_Clear(0);
-
 }
 
 void initButtonScanning(int calledEveryMs) {
@@ -40,10 +39,15 @@ void initButtonScanning(int calledEveryMs) {
     GPIOA->PUPDR |= GPIO_PUPDR_PUPDR0_1;
 }
 
+void enableTimer6() {
+    TIM6->CR1 |=  TIM_CR1_CEN;
+}
+
 FRESULT enableDisplay() {
     FRESULT res;
 
     LCD_Clear(0);
+    playingSong = 0;
 
     f_chdir("/");
     res = updateFiles(&dir, "");
@@ -52,8 +56,6 @@ FRESULT enableDisplay() {
     }
 
     TIM6->CR1 |=  TIM_CR1_CEN;
-
-    playingSong = 0;
 
     return 0;
 }

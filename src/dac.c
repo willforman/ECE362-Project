@@ -8,10 +8,7 @@
 #include "display.h"
 #include "timer.h"
 
-int playpause_history;
-int skip_history;
-int playpause_button = 0; // boolean
-int skip_button = 0;
+
 int dataIdx = 0; // overall index in data array (is in bytes)
 int finished = 0;
 int shortF = 0; // file shorter than 16000 bytes, assume not
@@ -42,6 +39,8 @@ int play() { // this array might need to be 16 uint16_t
     /**************************************************
     TIMER CONFIGURATIONS
     **************************************************/
+    dataIdx = 0;
+    shortF = 0;
 
 
     RCC->APB2ENR |= RCC_APB2ENR_TIM15EN;

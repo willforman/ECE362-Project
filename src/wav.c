@@ -57,8 +57,6 @@ WavResult verifyWavFile(FIL *file, WavHeaders *headers) {
     }
     f_read(file, &(headers->Subchunk2Size), 4, &bytesRead);*/
 
-    initPlayingDisplay();
-
     return W_OK;
 }
 

@@ -25,7 +25,6 @@ u16 bc1 = 0x0000;
 
 char* playingSongName;
 int playingSongNameLen;
-char playingSongNameShort[29];
 
 char bitsPerSampleStr[20];
 char sampleRateStr[19];
@@ -34,7 +33,7 @@ char progBarStr[] = "[                        ]";
 
 extern int dataIdx;
 int numBars = 25;
-int barIdx = 1;
+int barIdx;
 int progDiv;
 int progCurr;
 
@@ -147,7 +146,10 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
         }
     } else {
         *selectedWav = 1;
-        playingSongName = selectedFile.fname;
+        if (playingSongName[0] != '\0') {
+            free(playingSongName);
+        }
+        playingSongName = strdup(selectedFile.fname);
         playSDCardWavfile(selectedFile.fname);
     }
     return 0;
@@ -165,14 +167,24 @@ void initPlayingDisplay() {
     sprintf(bitsPerSampleStr, "Bits Per Sample: %d", headers.BitsPerSample);
     sprintf(sampleRateStr, "Sample Rate: %d", headers.SampleRate);
 
+    barIdx = 1;
     progDiv = headers.Subchunk2Size / numBars;
     progCurr = progDiv;
 
     playingSongNameLen = strlen(playingSongName);
-    playingSongNameShort[28] = '\0';
+
+    for (int i = 1; i < numBars; i++) {
+        progBarStr[i] = ' ';
+    }
+
+    LCD_DrawString(x1, y + 0x110, fc1, bc1, progBarStr, size1, mode1);
+    LCD_DrawString(x1, y + 0x10, fc1, bc1, "==========================", size1, mode1);
+    LCD_DrawString(x1, y + 0x30, fc1, bc1, bitsPerSampleStr, size1, mode1);
+    LCD_DrawString(x1, y + 0x50, fc1, bc1, sampleRateStr, size1, mode1);
+    LCD_DrawString(x1, y + 0x70, fc1, bc1, numChannelsStr, size1, mode1);
 }
 
-void updatePlayingDisplay(Dir* dir) {
+void updatePlayingDisplay() {
     // file name, header
     if (dataIdx > progCurr) {
         do {
@@ -189,16 +201,11 @@ void updatePlayingDisplay(Dir* dir) {
             playingSongName[j] = playingSongName[j + 1];
         }
         playingSongName[playingSongNameLen - 1] = temp;
-        strncpy(playingSongNameShort, playingSongName, 28);
-        LCD_DrawString(x1, y, fc1, bc1, playingSongNameShort, size1, mode1);
+        strncpy(fileNameShort, playingSongName, 28);
+        LCD_DrawString(x1, y, fc1, bc1, fileNameShort, size1, mode1);
     } else {
         LCD_DrawString(x1, y, fc1, bc1, playingSongName, size1, mode1);
     }
-
-    LCD_DrawString(x1, y + 0x10, fc1, bc1, "==========================", size1, mode1);
-    LCD_DrawString(x1, y + 0x30, fc1, bc1, bitsPerSampleStr, size1, mode1);
-    LCD_DrawString(x1, y + 0x50, fc1, bc1, sampleRateStr, size1, mode1);
-    LCD_DrawString(x1, y + 0x70, fc1, bc1, numChannelsStr, size1, mode1);
 }
 
 

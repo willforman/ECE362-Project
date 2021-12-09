@@ -4,7 +4,7 @@
 FATFS FatFs;
 int main() {
     FRESULT res;
-    //internal_clock(); // for the pcb
+    internal_clock(); // for the pcb
     res = f_mount(&FatFs, "", 0);
     if (res) {
         return res;
