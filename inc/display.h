@@ -10,6 +10,8 @@ typedef struct Dir {
    int numFiles;
 } Dir;
 
+
+
 void handleFileNextButton(Dir* dir);
 
 FRESULT handleFileSelectButton(Dir* dir, int* selectedWav);
@@ -20,5 +22,6 @@ void updatePlayingDisplay();
 void updateFilesDisplay(Dir* dir);
 
 void initPlayingDisplay();
+void printError();
 
 #endif

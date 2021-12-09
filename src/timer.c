@@ -5,7 +5,7 @@
 #include "ff.h"
 #include "commands.h"
 Dir dir;
-int playingSong = 0;
+int mode = 0;
 uint8_t pa1State = 0;
 uint8_t pa0State = 0;
 int pressPa0 = 0;
@@ -43,23 +43,6 @@ void enableTimer6() {
     TIM6->CR1 |=  TIM_CR1_CEN;
 }
 
-FRESULT enableDisplay() {
-    FRESULT res;
-
-    LCD_Clear(0);
-    playingSong = 0;
-
-    f_chdir("/");
-    res = updateFiles(&dir, "");
-    if (res) {
-        return res;
-    }
-
-    TIM6->CR1 |=  TIM_CR1_CEN;
-
-    return 0;
-}
-
 void disableDisplay() {
     TIM6->CR1 &= ~TIM_CR1_CEN;
     LCD_Clear(0);
@@ -73,13 +56,33 @@ void disableButtonScanning() {
     TIM7->CR1 &= ~TIM_CR1_CEN;
 }
 
+FRESULT enableDisplay() {
+    FRESULT res;
+
+    LCD_Clear(0);
+    mode = 0;
+
+    f_chdir("/");
+    res = updateFiles(&dir, "");
+    if (res) {
+        return res;
+    }
+
+    return 0;
+}
+
+void enableErrorMode(char* error) {
+    mode = 2;
+    disableDisplay();
+}
+
 void TIM6_DAC_IRQHandler() {
     TIM6->SR &= ~TIM_SR_UIF;
 
-    if (playingSong) {
+    if (mode) {
         updatePlayingDisplay();
     }
-    else{
+    else {
         updateFilesDisplay(&dir);
     }
 }
@@ -116,7 +119,7 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
         pa1State = 0;
     }
     // if playing song
-    if (playingSong) {
+    if (mode == 1) {
             // first button: play pause
             if (releasePa0) {
                 releasePa0 = 0;
@@ -127,22 +130,28 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
             else if (releasePa1) {
                 releasePa1 = 0;
                 stop();
-                playingSong = 0;
+                mode = 0;
                 return;
             }
         }
         // second button: end song
-    else { // song selection
+    else if (mode == 0) { // song selection
             // first button: select file
         if (releasePa0) {
             releasePa0 = 0;
             int selectedWav;
             res = handleFileSelectButton(&dir, &selectedWav);
             if (res) {
+                if (res == 25) {
+                    return;
+                }
+                disableButtonScanning();
+                disableDisplay();
+                printEndError(res);
                 return;
             }
             if (selectedWav) {
-                playingSong = 1;
+                mode = 1;
                 LCD_Clear(0);
                 initPlayingDisplay();
             }
@@ -153,6 +162,13 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
             releasePa1 = 0;
             handleFileNextButton(&dir);
             return;
+        }
+    } else { // mode: error displayed on screen
+        if (releasePa0) {
+            mode = 0;
+            enableDisplay();
+            enableTimer6();
+            releasePa0 = 0;
         }
     }
 }
@@ -165,38 +181,54 @@ void TIM7_IRQHandler() { // invokes every 1ms to read from pa0 and pb2
     int pa0 = GPIOA->IDR & 0x1;
     int pa1 = GPIOA->IDR & 0x2;
     // if playing song
-    if (playingSong) {
+    if (mode == 1) {
         // first button: play pause
         if (pa0) {
+            releasePa0 = 0;
             togglePlay();
             return;
         }
         // second button: end song
         else if (pa1) {
+            releasePa1 = 0;
             stop();
-            playingSong = 0;
-            return;
-        }
-    } else { // song selection
-        // first button: select file
-        if (pa0) {
-            int selectedWav;
-            res = handleFileSelectButton(&dir, &selectedWav);
-            if (res) {
-                return;
-            }
-            if (selectedWav) {
-                playingSong = 1;
-                disableDisplay();
-            }
-            return;
-        }
-        // second button: move the file to the next
-        else if (pa1) {
-            handleFileNextButton(&dir);
+            mode = 0;
             return;
         }
     }
+    // second button: end song
+    else if (mode == 0) { // song selection
+        // first button: select file
+        if (pa0) {
+            releasePa0 = 0;
+            int selectedWav;
+            res = handleFileSelectButton(&dir, &selectedWav);
+        if (res) {
+            return;
+        }
+        if (selectedWav) {
+            mode = 1;
+            LCD_Clear(0);
+            initPlayingDisplay();
+        }
+        return;
+        }
+        // second button: move the file to the next
+        else if (pa1) {
+            releasePa1 = 0;
+            handleFileNextButton(&dir);
+            return;
+        }
+    } else { // mode: error displayed on screen
+        if (pa0) {
+            mode = 0;
+            enableDisplay();
+            enableTimer6();
+            releasePa0 = 0;
+        }
+    }
+
+
 }
 #endif
 

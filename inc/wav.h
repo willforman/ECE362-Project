@@ -20,6 +20,8 @@ typedef struct WavHeaders {
     uint16_t BitsPerSample;
     uint32_t Subchunk2ID;
     uint32_t Subchunk2Size;
+    char* infoList[30];
+    int infoListIdx;
 } WavHeaders;
 
 typedef enum WavResult {
@@ -30,6 +32,8 @@ typedef enum WavResult {
     W_ERR_READING_DATA,
     W_MEM_ERR,
 } WavResult;
+
+
 
 WavResult verifyWavFile(FIL *file, WavHeaders* headers);
 

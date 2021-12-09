@@ -33,6 +33,10 @@ void stop() {
     DMA1_Channel5->CCR &= ~DMA_CCR_EN;
     closeSDCardFile(&FatFs, &fil);
     enableDisplay();
+
+    for (int i = 0; i < headers.infoListIdx; i++) {
+        free(headers.infoList[i]);
+    }
 }
 
 int play() { // this array might need to be 16 uint16_t
@@ -72,7 +76,7 @@ int play() { // this array might need to be 16 uint16_t
     DMA1_Channel5->CCR |= DMA_CCR_TCIE | DMA_CCR_HTIE; // if we need to break apart the array of data 
     DMA1_Channel5->CCR |= DMA_CCR_DIR;
 
-    f_lseek(file, 44);
+    //f_lseek(file, 44);
 
     UINT bytesRead = 0;
     f_read(file,dac_arr,16000,&bytesRead);

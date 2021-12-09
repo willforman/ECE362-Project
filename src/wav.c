@@ -3,6 +3,8 @@
 #include "ff.h"
 #include "DAC.h"
 #include "display.h"
+#include <stdlib.h>
+#include <string.h>
 
 uint16_t* array;
 WavHeaders headers;
@@ -21,9 +23,7 @@ WavResult verifyWavFile(FIL *file, WavHeaders *headers) {
     FRESULT res;
     UINT bytesRead;
 
-    //f_mount(&FatFs, "", 0);
-    res = f_read(file, headers, sizeof *headers, &bytesRead); // fills out each attribute of WavHeaders
-    //f_mount(0, "", 1);
+    res = f_read(file, headers, sizeof *headers - (12 + sizeof(headers->infoList)), &bytesRead); // fills out each attribute of WavHeaders
 
     // if the read resulted in an error
     if (res) {
@@ -49,16 +49,73 @@ WavResult verifyWavFile(FIL *file, WavHeaders *headers) {
         return W_NOT_MONO;
     }
 
-    // Some .wav files may include extra params in the fmt block.
-    // We need to advance the Subchunk2ID past these
-    /*while (headers->Subchunk2ID != be(0x64617461)) {
-        f_lseek(file, 4);
-        f_read(file, &(headers->Subchunk2ID), 4, &bytesRead);
+    uint32_t id;
+    f_read(file, &id, sizeof(id), &bytesRead);
+
+    // List chunk
+    headers->infoListIdx = 0;
+    if (id == 0x5453494c) {
+        uint32_t listSize;
+        f_read(file, &listSize, sizeof(listSize), &bytesRead);
+
+        uint32_t typeId;
+        f_read(file, &typeId, sizeof(typeId), &bytesRead);
+
+        if (typeId != 0x4f464e49) {
+            return W_INVALID_HEADERS;
+        }
+
+
+
+        while (1) {
+            uint32_t label;
+            f_read(file, &label, 4, &bytesRead);
+
+            if (label == 0x61746164) {
+                break;
+            }
+
+            uint8_t size;
+            f_read(file, &size, sizeof(size), &bytesRead);
+            f_lseek(file, f_tell(file) + 3);
+
+            int strSize = 6 + size + 1; // "IART: Mathematics and Nature\0"
+            char* str = malloc(strSize);
+
+            strcpy(str, (char*) &label);
+            str[4] = ':';
+            str[5] = ' ';
+            str[strSize - 1] = '\0';
+
+            f_read(file, str + 6, size, &bytesRead);
+
+            for (int i = 6; i < strSize - 1; i++) {
+                if (str[i] < 20) {
+                    str[i] = ' ';
+                }
+            }
+
+            headers->infoList[headers->infoListIdx] = str;
+            headers->infoListIdx++;
+
+            uint8_t advance;
+            do {
+                f_read(file, &advance, 1, &bytesRead);
+            } while (advance == 0);
+            f_lseek(file, f_tell(file) - 1);
+        }
     }
-    f_read(file, &(headers->Subchunk2Size), 4, &bytesRead);*/
+    f_read(file, &(headers->Subchunk2Size), 4, &bytesRead);
 
     return W_OK;
 }
+
+const char *w_errs[] = {
+        [W_OK] = "Success",
+        [W_INVALID_PATH] = "Invalid path",
+        [W_INVALID_HEADERS] = "Invalid headers",
+        [W_NOT_MONO] = "File is not Mono",
+};
 
 FRESULT playSDCardWavfile(char* filename) {
     FRESULT res;
@@ -72,7 +129,8 @@ FRESULT playSDCardWavfile(char* filename) {
     r = verifyWavFile(&fil, &headers);
 
     if (r) {
-        return 1;
+        printError(w_errs[r]);
+        return 25;
     }
 
     return play();

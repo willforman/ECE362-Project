@@ -37,6 +37,42 @@ int barIdx;
 int progDiv;
 int progCurr;
 
+void printError(char* error) {
+    enableErrorMode();
+    LCD_DrawString(x1, y, fc1, bc1, error, size1, mode1);
+    LCD_DrawString(x1, 0x20, fc1, bc1, "Press right button to return", size1, mode1);
+}
+
+void printEndError(FRESULT res) {
+    const char *f_errs[] = {
+            [FR_OK] = "Success",
+            [FR_DISK_ERR] = "Hard err in disk I/O layer",
+            [FR_INT_ERR] = "Assertion failed",
+            [FR_NOT_READY] = "Physical drive cannot work",
+            [FR_NO_FILE] = "File not found",
+            [FR_NO_PATH] = "Path not found",
+            [FR_INVALID_NAME] = "Path name format invalid",
+            [FR_DENIED] = "Permission denied",
+            [FR_EXIST] = "Prohibited access",
+            [FR_INVALID_OBJECT] = "File or dir object invalid",
+            [FR_WRITE_PROTECTED] = "Phys drive is write-protected",
+            [FR_INVALID_DRIVE] = "Logical drive num is invalid",
+            [FR_NOT_ENABLED] = "Volume has no work area",
+            [FR_NO_FILESYSTEM] = "Not a valid FAT volume",
+            [FR_MKFS_ABORTED] = "f_mkfs aborted",
+            [FR_TIMEOUT] = "Unable to obtain grant for object",
+            [FR_LOCKED] = "File locked",
+            [FR_NOT_ENOUGH_CORE] = "File name is too large",
+            [FR_TOO_MANY_OPEN_FILES] = "Too many open files",
+            [FR_INVALID_PARAMETER] = "Either err, or root is empty",
+    };
+
+    LCD_DrawString(x1, 0, fc1, bc1, f_errs[res], size1, mode1);
+    LCD_DrawString(x1, 0x20, fc1, bc1, "==========================", size1, mode1);
+    LCD_DrawString(x1, 0x40, fc1, bc1, "Remove SD card and reinsert,", size1, mode1);
+    LCD_DrawString(x1, 0x60, fc1, bc1, "then reset with left button.", size1, mode1);
+}
+
 int isWav(char* filename) {
   int len = strlen(filename);
   return filename[len - 4] == '.' && filename[len - 3] == 'w' && filename[len - 2] == 'a' && filename[len - 1] == 'v';
@@ -86,11 +122,14 @@ FRESULT updateFiles(Dir* dir, const TCHAR * dest) {
       dir->fileNames[i] = strdup(fno.fname);
     }
     
+    if (dir->numFiles == 0) {
+        return FR_INVALID_PARAMETER;
+    }
+
     dir->fileNames[i] = "..";
     dir->numFiles++;
 
     f_closedir(&f_dir);
-    //f_mount(0, "", 1);
     return 0;
 }
 
@@ -100,7 +139,6 @@ FRESULT getSelectedFile(Dir* dir, FILINFO* fno) {
 
   res = f_opendir(&f_dir, "");
   if (res) {
-      //f_mount(0, "", 1);
       return res;
   }
 
@@ -108,7 +146,6 @@ FRESULT getSelectedFile(Dir* dir, FILINFO* fno) {
     res = f_readdir(&f_dir, fno);
     if (res != FR_OK || fno->fname[0] == 0) {
       f_closedir(&f_dir);
-      //f_mount(0, "", 1);
       return res;
     }
   }
@@ -142,6 +179,9 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
         res = updateFiles(dir, selectedFile.fname);
         LCD_Clear(0);
         if (res) {
+            disableDisplay();
+            disableButtonScanning();
+            printEndError(res);
             return res;
         }
     } else {
@@ -150,7 +190,13 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
             free(playingSongName);
         }
         playingSongName = strdup(selectedFile.fname);
-        playSDCardWavfile(selectedFile.fname);
+        res = playSDCardWavfile(selectedFile.fname);
+        if (res) {
+            if (res == 25) {
+                return res;
+            }
+            return res;
+        }
     }
     return 0;
 }
@@ -158,14 +204,21 @@ FRESULT handleFileSelectButton(Dir* dir, int* selectedWav) {
 void handleFileNextButton(Dir* dir) {
     if (dir->currSelection == dir->numFiles - 1) {
         dir->currSelection = 0;
+        LCD_Clear(0);
     } else {
         dir->currSelection++;
+        if (dir->currSelection % 10 == 0) {
+            LCD_Clear(0);
+        }
     }
 }
 
 void initPlayingDisplay() {
-    sprintf(bitsPerSampleStr, "Bits Per Sample: %d", headers.BitsPerSample);
-    sprintf(sampleRateStr, "Sample Rate: %d", headers.SampleRate);
+
+    //sprintf(bitsPerSampleStr, "Bits Per Sample: %d", headers.BitsPerSample);
+    //sprintf(sampleRateStr, "Sample Rate: %d", headers.SampleRate);
+    char sampleStr[12];
+    sprintf(sampleStr, "%d x %d", headers.SampleRate, headers.BitsPerSample);
 
     barIdx = 1;
     progDiv = headers.Subchunk2Size / numBars;
@@ -177,11 +230,13 @@ void initPlayingDisplay() {
         progBarStr[i] = ' ';
     }
 
-    LCD_DrawString(x1, y + 0x110, fc1, bc1, progBarStr, size1, mode1);
-    LCD_DrawString(x1, y + 0x10, fc1, bc1, "==========================", size1, mode1);
-    LCD_DrawString(x1, y + 0x30, fc1, bc1, bitsPerSampleStr, size1, mode1);
-    LCD_DrawString(x1, y + 0x50, fc1, bc1, sampleRateStr, size1, mode1);
-    LCD_DrawString(x1, y + 0x70, fc1, bc1, numChannelsStr, size1, mode1);
+    //LCD_DrawString(x1, y + 0x110, fc1, bc1, progBarStr, size1, mode1);
+    //LCD_DrawString(x1, y + 0x10, fc1, bc1, "==========================", size1, mode1);
+    LCD_DrawString(x1, y + 0x10, fc1, bc1, progBarStr, size1, mode1);
+    LCD_DrawString(x1, y + 0x20, fc1, bc1, sampleStr, size1, mode1);
+
+
+
 }
 
 void updatePlayingDisplay() {
@@ -192,7 +247,7 @@ void updatePlayingDisplay() {
             barIdx++;
             progCurr += progDiv;
         } while (dataIdx > progCurr);
-        LCD_DrawString(x1, y + 0x110, fc1, bc1, progBarStr, size1, mode1);
+        LCD_DrawString(x1, y + 0x10, fc1, bc1, progBarStr, size1, mode1);
     }
 
     if (playingSongNameLen > 28) {
@@ -206,6 +261,27 @@ void updatePlayingDisplay() {
     } else {
         LCD_DrawString(x1, y, fc1, bc1, playingSongName, size1, mode1);
     }
+
+    // List info
+    int offset = 0;
+    for (int i = 0; i < headers.infoListIdx; i++) {
+        char* str = headers.infoList[i];
+        int len = strlen(str);
+
+        if (len > 28) {
+            char temp = str[0];
+            for(int j = 0; j < len - 1; j++) {
+                str[j] = str[j + 1];
+            }
+            str[len - 1] = temp;
+            strncpy(fileNameShort, str, 28);
+            LCD_DrawString(x1, 0x40 + offset, fc1, bc1, fileNameShort, size1, mode1);
+        } else {
+            LCD_DrawString(x1, 0x40 + offset, fc1, bc1, str, size1, mode1);
+        }
+
+        offset += 0x10;
+    }
 }
 
 
@@ -213,10 +289,6 @@ void updatePlayingDisplay() {
 void updateFilesDisplay(Dir* dir)
 {
     int sel = dir -> currSelection;
-    /*if (sel % 10 == 0)
-    {
-        LCD_Clear(0);
-    }*/
     int offsetY = 0x00;
 
 
@@ -248,4 +320,5 @@ void updateFilesDisplay(Dir* dir)
         }
     }
 }
+
 
